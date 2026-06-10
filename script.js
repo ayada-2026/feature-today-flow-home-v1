@@ -1,11 +1,47 @@
 const app = document.getElementById("app");
 const liveRegion = document.getElementById("liveRegion");
 
+const STORAGE_KEYS = {
+  railItems: "todayFlowRailItems",
+  recordsByDate: "todayFlowRecordsByDate"
+};
+
+const DEFAULT_RAIL_ITEMS = [
+  {
+    id: "rail-premiere",
+    time: "2시",
+    title: "프리미어프로",
+    note: "20분만"
+  },
+  {
+    id: "rail-home",
+    time: "4시",
+    title: "집안일 정리",
+    note: "15분만"
+  },
+  {
+    id: "rail-dinner",
+    time: "6시",
+    title: "저녁준비",
+    note: "시작만"
+  }
+];
+
+const todayKey = formatDateKey(new Date());
+
 const state = {
   activeTab: "home",
+  selectedDateKey: todayKey,
   editingRailId: null,
   addPanelOpen: false,
   addPanelMode: "record",
+  datePanelOpen: false,
+  recordSheetOpen: false,
+  recordSheetMode: "view",
+  selectedRecordId: null,
+  recordEditDraft: "",
+  stampingRecordId: null,
+  stampingRecordDateKey: null,
   addPanelDraft: {
     record: {
       recordText: ""
@@ -17,59 +53,8 @@ const state = {
     }
   },
   toastMessage: "",
-  railItems: [
-    {
-      id: "rail-premiere",
-      time: "2시",
-      title: "프리미어프로",
-      note: "20분만",
-      started: false
-    },
-    {
-      id: "rail-home",
-      time: "4시",
-      title: "집안일 정리",
-      note: "15분만",
-      started: false
-    },
-    {
-      id: "rail-dinner",
-      time: "6시",
-      title: "저녁준비",
-      note: "시작만",
-      started: false
-    }
-  ],
-  records: [
-    {
-      id: "record-premiere",
-      icon: "🎬",
-      text: "프리미어프로 20분 함",
-      category: "record",
-      stamped: true
-    },
-    {
-      id: "record-dishes",
-      icon: "🍽",
-      text: "설거지 15분 함",
-      category: "chore",
-      stamped: true
-    },
-    {
-      id: "record-water",
-      icon: "🥛",
-      text: "물 한 컵 마심",
-      category: "care",
-      stamped: true
-    },
-    {
-      id: "record-wash",
-      icon: "🫧",
-      text: "세수함",
-      category: "care",
-      stamped: true
-    }
-  ]
+  railItems: loadRailItems(),
+  recordsByDate: loadRecordsByDate()
 };
 
 let toastTimer = null;
@@ -101,12 +86,154 @@ function createButton(className, text, action, id) {
   return button;
 }
 
-function formatToday() {
+function createId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+function readJson(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    const parsed = saved ? JSON.parse(saved) : fallback;
+    return parsed ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function normalizeRailItem(item) {
+  return {
+    id: item.id || createId("rail"),
+    time: item.time || "시간",
+    title: item.title || "새 항목",
+    note: item.note || "가볍게",
+    timerStatus: "idle",
+    durationSeconds: null,
+    remainingSeconds: null
+  };
+}
+
+function stripRailForStorage(item) {
+  return {
+    id: item.id,
+    time: item.time,
+    title: item.title,
+    note: item.note
+  };
+}
+
+function loadRailItems() {
+  const parsed = readJson(STORAGE_KEYS.railItems, null);
+  const source = Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_RAIL_ITEMS;
+  return source.map(normalizeRailItem);
+}
+
+function saveRailItems() {
+  writeJson(STORAGE_KEYS.railItems, state.railItems.map(stripRailForStorage));
+}
+
+function defaultRecordsForToday() {
+  return [
+    {
+      id: "record-premiere",
+      icon: "🎬",
+      text: "프리미어프로 20분 함",
+      category: "record",
+      stamped: false
+    },
+    {
+      id: "record-dishes",
+      icon: "🍽",
+      text: "설거지 15분 함",
+      category: "chore",
+      stamped: false
+    },
+    {
+      id: "record-water",
+      icon: "🥛",
+      text: "물 한 컵 마심",
+      category: "care",
+      stamped: false
+    },
+    {
+      id: "record-wash",
+      icon: "🫧",
+      text: "세수함",
+      category: "care",
+      stamped: false
+    }
+  ];
+}
+
+function loadRecordsByDate() {
+  const parsed = readJson(STORAGE_KEYS.recordsByDate, null);
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  return {
+    [todayKey]: defaultRecordsForToday()
+  };
+}
+
+function saveRecordsByDate() {
+  writeJson(STORAGE_KEYS.recordsByDate, state.recordsByDate);
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function dateFromKey(dateKey) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function shiftDateKey(dateKey, days) {
+  const date = dateFromKey(dateKey);
+  date.setDate(date.getDate() + days);
+  return formatDateKey(date);
+}
+
+function formatDateLabel(dateKey) {
   return new Intl.DateTimeFormat("ko-KR", {
     month: "long",
     day: "numeric",
     weekday: "long"
-  }).format(new Date());
+  }).format(dateFromKey(dateKey));
+}
+
+function getSelectedRecords() {
+  return state.recordsByDate[state.selectedDateKey] || [];
+}
+
+function setSelectedRecords(records) {
+  state.recordsByDate = {
+    ...state.recordsByDate,
+    [state.selectedDateKey]: records
+  };
+  saveRecordsByDate();
+}
+
+function updateSelectedRecord(id, nextValues) {
+  setSelectedRecords(getSelectedRecords().map((record) => (
+    record.id === id ? { ...record, ...nextValues } : record
+  )));
+}
+
+function deleteSelectedRecord(id) {
+  setSelectedRecords(getSelectedRecords().filter((record) => record.id !== id));
+}
+
+function getSelectedRecord() {
+  return getSelectedRecords().find((record) => record.id === state.selectedRecordId);
 }
 
 function render() {
@@ -121,6 +248,14 @@ function render() {
 
   if (state.addPanelOpen) {
     app.append(renderAddPanel());
+  }
+
+  if (state.datePanelOpen) {
+    app.append(renderDatePanel());
+  }
+
+  if (state.recordSheetOpen) {
+    app.append(renderRecordSheet());
   }
 
   if (state.toastMessage) {
@@ -146,10 +281,10 @@ function renderHero() {
 
   titleBlock.append(eyebrow, title, subtitle);
 
-  const datePill = createElement("div", "date-pill");
-  datePill.setAttribute("aria-label", "오늘 날짜");
+  const datePill = createButton("date-pill", "", "open-date-panel");
+  datePill.setAttribute("aria-label", "날짜 선택");
   datePill.append(createElement("span", null, "📅"));
-  datePill.append(createElement("span", null, formatToday()));
+  datePill.append(createElement("span", null, formatDateLabel(state.selectedDateKey)));
 
   titleRow.append(titleBlock, datePill);
   copy.append(titleRow);
@@ -160,7 +295,7 @@ function renderHero() {
 
 function renderPostIts() {
   const layer = createElement("div", "sticky-layer");
-  const shownItems = state.railItems.slice(-3);
+  const shownItems = state.railItems.slice(0, 3);
 
   shownItems.forEach((item) => {
     const note = createElement("article", "post-it");
@@ -234,6 +369,10 @@ function renderRailActions(item) {
     startButton.classList.add("is-started");
   }
 
+  if (timerStatus === "paused") {
+    startButton.classList.add("is-paused");
+  }
+
   if (timerStatus === "done") {
     startButton.classList.add("is-ready-to-record");
   }
@@ -251,9 +390,9 @@ function renderRailEditor(item) {
   form.dataset.id = item.id;
 
   form.append(
-    renderInputRow("시간", "time", item.time, 8),
-    renderInputRow("항목", "title", item.title, 28),
-    renderInputRow("문구", "note", item.note, 32)
+    renderInputRow("시간", "time", item.time, 8, "예: 4시"),
+    renderInputRow("항목", "title", item.title, 28, "예: 집안일 정리"),
+    renderInputRow("문구", "note", item.note, 32, "예: 15분만")
   );
 
   const actions = createElement("div", "rail-edit-actions");
@@ -261,6 +400,7 @@ function renderRailEditor(item) {
   saveButton.type = "submit";
 
   actions.append(
+    createButton("rail-delete-button", "삭제", "delete-rail", item.id),
     createButton("pill-button rail-secondary-button", "취소", "cancel-edit", item.id),
     saveButton
   );
@@ -286,13 +426,22 @@ function renderTodayRecords() {
   const section = renderCardShell("📝", "오늘 기록");
   section.id = "recordsSection";
   const list = createElement("ul", "record-list");
+  const records = getSelectedRecords();
 
-  state.records.forEach((record) => {
+  if (records.length === 0) {
+    const empty = createElement("p", "record-empty", "이 날짜에는 아직 남긴 기록이 없어요.");
+    section.append(empty);
+    return section;
+  }
+
+  records.forEach((record) => {
     const item = createElement("li", "record-item");
+    item.dataset.action = "open-record-sheet";
+    item.dataset.id = record.id;
     item.append(
       createElement("span", "record-emoji", record.icon),
       createElement("span", "record-text", record.text),
-      createElement("span", "stamp-badge", "참 잘했어요")
+      renderStampButton(record)
     );
     list.append(item);
   });
@@ -301,15 +450,33 @@ function renderTodayRecords() {
   return section;
 }
 
+function renderStampButton(record) {
+  const stamp = createButton("stamp-badge stamp-button", record.stamped ? "참 잘했어요" : "도장 찍기", "stamp-record", record.id);
+  stamp.setAttribute("aria-label", `${record.text} 도장 찍기`);
+
+  if (record.stamped) {
+    stamp.classList.add("is-stamped");
+  } else {
+    stamp.classList.add("is-empty");
+  }
+
+  if (state.stampingRecordId === record.id && state.stampingRecordDateKey === state.selectedDateKey) {
+    stamp.classList.add("is-stamping");
+  }
+
+  return stamp;
+}
+
 function renderSummary() {
   const summary = createElement("section", "section-card summary-card");
   summary.setAttribute("aria-label", "오늘 요약");
+  const records = getSelectedRecords();
 
   const summaryItems = [
     {
       icon: "📋",
       label: "기록",
-      value: state.records.length
+      value: records.length
     },
     {
       icon: "🌱",
@@ -337,7 +504,7 @@ function renderSummary() {
 }
 
 function countRecordsByCategory(category) {
-  return state.records.filter((record) => record.category === category).length;
+  return getSelectedRecords().filter((record) => record.category === category).length;
 }
 
 function getRailDurationSeconds(item) {
@@ -364,9 +531,14 @@ function formatRemainingTime(totalSeconds) {
 
 function getRailButtonLabel(item) {
   const timerStatus = item.timerStatus || "idle";
+  const remaining = formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item));
 
   if (timerStatus === "running") {
-    return formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item));
+    return remaining;
+  }
+
+  if (timerStatus === "paused") {
+    return `⏸ ${remaining}`;
   }
 
   if (timerStatus === "done") {
@@ -380,7 +552,11 @@ function getRailButtonAction(item) {
   const timerStatus = item.timerStatus || "idle";
 
   if (timerStatus === "running") {
-    return "timer-running";
+    return "pause-rail";
+  }
+
+  if (timerStatus === "paused") {
+    return "resume-rail";
   }
 
   if (timerStatus === "done") {
@@ -429,7 +605,7 @@ function renderTabBar() {
 }
 
 function renderAddPanel() {
-  const overlay = createElement("div", "add-panel-overlay");
+  const overlay = createElement("div", "add-panel-overlay sheet-overlay");
   overlay.dataset.action = "close-add-panel";
 
   const panel = createElement("section", "add-panel");
@@ -440,7 +616,7 @@ function renderAddPanel() {
   const handle = createElement("span", "panel-handle");
   const title = createElement("h2", null, "무엇을 남길까요?");
   title.id = "addPanelTitle";
-  const subtitle = createElement("p", "panel-subtitle", "오늘의 작은 흐름을 가볍게 남겨보세요.");
+  const subtitle = createElement("p", "panel-subtitle", `${formatDateLabel(state.selectedDateKey)}에 작은 흐름을 남겨보세요.`);
 
   panel.append(handle, title, subtitle, renderPanelModeTabs());
 
@@ -543,6 +719,87 @@ function renderPanelActions(saveText) {
   return actions;
 }
 
+function renderDatePanel() {
+  const overlay = createElement("div", "add-panel-overlay sheet-overlay");
+  overlay.dataset.action = "close-date-panel";
+  const panel = createElement("section", "add-panel date-panel");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "datePanelTitle");
+
+  const handle = createElement("span", "panel-handle");
+  const title = createElement("h2", null, "날짜를 고를까요?");
+  title.id = "datePanelTitle";
+  const subtitle = createElement("p", "panel-subtitle", formatDateLabel(state.selectedDateKey));
+  const actions = createElement("div", "date-panel-actions");
+
+  actions.append(
+    createButton("panel-cancel", "전날", "shift-date", "-1"),
+    createButton("panel-save", "오늘", "select-today"),
+    createButton("panel-cancel", "다음날", "shift-date", "1"),
+    createButton("panel-cancel", "닫기", "close-date-panel")
+  );
+
+  panel.append(handle, title, subtitle, actions);
+  overlay.append(panel);
+  return overlay;
+}
+
+function renderRecordSheet() {
+  const record = getSelectedRecord();
+
+  if (!record) {
+    state.recordSheetOpen = false;
+    return document.createDocumentFragment();
+  }
+
+  const overlay = createElement("div", "add-panel-overlay sheet-overlay");
+  overlay.dataset.action = "close-record-sheet";
+  const panel = createElement("section", "add-panel record-sheet");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "recordSheetTitle");
+
+  const handle = createElement("span", "panel-handle");
+  const title = createElement("h2", null, state.recordSheetMode === "edit" ? "기록 수정하기" : "기록 살펴보기");
+  title.id = "recordSheetTitle";
+  panel.append(handle, title);
+
+  if (state.recordSheetMode === "edit") {
+    const form = createElement("form", "panel-form");
+    form.dataset.action = "save-record-edit";
+    form.append(renderPanelField({
+      label: "기록 내용",
+      name: "recordEditText",
+      placeholder: "기록을 적어주세요",
+      maxLength: 44,
+      value: state.recordEditDraft
+    }));
+
+    const actions = createElement("div", "panel-actions");
+    const saveButton = createElement("button", "panel-save", "저장");
+    saveButton.type = "submit";
+    actions.append(
+      createButton("panel-cancel", "취소", "cancel-record-edit"),
+      saveButton
+    );
+    form.append(actions);
+    panel.append(form);
+  } else {
+    panel.append(createElement("p", "record-sheet-text", record.text));
+    const actions = createElement("div", "record-sheet-actions");
+    actions.append(
+      createButton("panel-save", "수정하기", "edit-record"),
+      createButton("rail-delete-button", "삭제하기", "delete-record"),
+      createButton("panel-cancel", "취소", "close-record-sheet")
+    );
+    panel.append(actions);
+  }
+
+  overlay.append(panel);
+  return overlay;
+}
+
 function renderToast() {
   const toast = createElement("div", "toast", state.toastMessage);
   toast.setAttribute("role", "status");
@@ -604,6 +861,8 @@ function openAddPanel(mode = "record") {
   state.addPanelMode = mode;
   resetAddPanelDraft();
   state.editingRailId = null;
+  state.datePanelOpen = false;
+  state.recordSheetOpen = false;
 }
 
 function closeAddPanel() {
@@ -669,16 +928,16 @@ function saveRecord(form) {
     return;
   }
 
-  state.records = [
+  setSelectedRecords([
     {
-      id: `record-${Date.now()}`,
+      id: createId("record"),
       icon: getRecordIcon(text),
       text,
       category: getRecordCategory(text),
-      stamped: true
+      stamped: false
     },
-    ...state.records
-  ];
+    ...getSelectedRecords()
+  ]);
   state.activeTab = "records";
   closeAddPanel();
   showToast("오늘 기록에 남겼어요.");
@@ -699,15 +958,14 @@ function saveNewRail(form) {
 
   state.railItems = [
     ...state.railItems,
-    {
-      id: `rail-${Date.now()}`,
+    normalizeRailItem({
+      id: createId("rail"),
       time,
       title,
-      note: note || "가볍게",
-      started: false,
-      timerStatus: "idle"
-    }
+      note: note || "가볍게"
+    })
   ];
+  saveRailItems();
   closeAddPanel();
   showToast("오늘의 레일에 추가했어요.");
   render();
@@ -724,18 +982,42 @@ function startRailTimer(id) {
   const durationSeconds = getRailDurationSeconds(item);
   clearRailTimer(id);
   updateRailItem(id, {
-    started: true,
     timerStatus: "running",
     durationSeconds,
     remainingSeconds: durationSeconds
   });
   render();
+  runRailTimer(id);
+}
 
+function runRailTimer(id) {
+  clearRailTimer(id);
   const intervalId = setInterval(() => {
     tickRailTimer(id);
   }, 1000);
-
   railTimerIntervals.set(id, intervalId);
+}
+
+function pauseRailTimer(id) {
+  clearRailTimer(id);
+  updateRailItem(id, {
+    timerStatus: "paused"
+  });
+  render();
+}
+
+function resumeRailTimer(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item) {
+    return;
+  }
+
+  updateRailItem(id, {
+    timerStatus: "running"
+  });
+  render();
+  runRailTimer(id);
 }
 
 function tickRailTimer(id) {
@@ -775,26 +1057,96 @@ function recordRailResult(id) {
   const durationSeconds = item.durationSeconds || getRailDurationSeconds(item);
   const recordText = `${item.title} ${formatDurationForRecord(durationSeconds)} 함`;
 
-  state.records = [
+  setSelectedRecords([
     {
-      id: `record-${Date.now()}`,
+      id: createId("record"),
       icon: getRecordIcon(recordText),
       text: recordText,
       category: getRecordCategory(recordText),
-      stamped: true
+      stamped: false
     },
-    ...state.records
-  ];
+    ...getSelectedRecords()
+  ]);
   updateRailItem(id, {
-    started: false,
     timerStatus: "idle",
     durationSeconds: null,
     remainingSeconds: null
   });
   state.activeTab = "records";
-  showToast("오늘 기록에 남겼어요.");
+  showToast("선택한 날짜 기록에 남겼어요.");
   render();
   scrollToSection("recordsSection");
+}
+
+function deleteRail(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item || !window.confirm("이 레일을 지울까요?")) {
+    return;
+  }
+
+  clearRailTimer(id);
+  state.railItems = state.railItems.filter((railItem) => railItem.id !== id);
+  state.editingRailId = null;
+  saveRailItems();
+  showToast("레일을 지웠어요.");
+  render();
+}
+
+function stampRecord(id) {
+  const record = getSelectedRecords().find((item) => item.id === id);
+
+  if (!record || record.stamped) {
+    return;
+  }
+
+  const stampDateKey = state.selectedDateKey;
+  state.stampingRecordId = id;
+  state.stampingRecordDateKey = stampDateKey;
+  render();
+
+  setTimeout(() => {
+    const records = state.recordsByDate[stampDateKey] || [];
+    state.recordsByDate = {
+      ...state.recordsByDate,
+      [stampDateKey]: records.map((item) => (
+        item.id === id ? { ...item, stamped: true } : item
+      ))
+    };
+    state.stampingRecordId = null;
+    state.stampingRecordDateKey = null;
+    saveRecordsByDate();
+    render();
+  }, 240);
+}
+
+function openRecordSheet(id) {
+  const record = getSelectedRecords().find((item) => item.id === id);
+
+  if (!record) {
+    return;
+  }
+
+  state.selectedRecordId = id;
+  state.recordEditDraft = record.text;
+  state.recordSheetMode = "view";
+  state.recordSheetOpen = true;
+  state.addPanelOpen = false;
+  state.datePanelOpen = false;
+}
+
+function closeRecordSheet() {
+  state.recordSheetOpen = false;
+  state.selectedRecordId = null;
+  state.recordEditDraft = "";
+  state.recordSheetMode = "view";
+}
+
+function changeSelectedDate(nextDateKey) {
+  state.selectedDateKey = nextDateKey;
+  state.activeTab = "home";
+  closeRecordSheet();
+  closeAddPanel();
 }
 
 app.addEventListener("click", (event) => {
@@ -806,7 +1158,37 @@ app.addEventListener("click", (event) => {
 
   const { action, id } = actionTarget.dataset;
 
-  if (action === "close-add-panel" && actionTarget.classList.contains("add-panel-overlay") && event.target !== actionTarget) {
+  if (action.endsWith("panel") || action.endsWith("sheet")) {
+    const isOverlayClick = actionTarget.classList.contains("sheet-overlay") && event.target !== actionTarget;
+
+    if (isOverlayClick) {
+      return;
+    }
+  }
+
+  if (action === "open-date-panel") {
+    state.datePanelOpen = true;
+    state.addPanelOpen = false;
+    state.recordSheetOpen = false;
+    render();
+    return;
+  }
+
+  if (action === "close-date-panel") {
+    state.datePanelOpen = false;
+    render();
+    return;
+  }
+
+  if (action === "shift-date") {
+    state.selectedDateKey = shiftDateKey(state.selectedDateKey, Number(id));
+    render();
+    return;
+  }
+
+  if (action === "select-today") {
+    state.selectedDateKey = todayKey;
+    render();
     return;
   }
 
@@ -815,7 +1197,13 @@ app.addEventListener("click", (event) => {
     return;
   }
 
-  if (action === "timer-running") {
+  if (action === "pause-rail") {
+    pauseRailTimer(id);
+    return;
+  }
+
+  if (action === "resume-rail") {
+    resumeRailTimer(id);
     return;
   }
 
@@ -827,12 +1215,60 @@ app.addEventListener("click", (event) => {
   if (action === "edit-rail") {
     state.editingRailId = state.editingRailId === id ? null : id;
     state.addPanelOpen = false;
+    state.datePanelOpen = false;
+    state.recordSheetOpen = false;
     render();
     return;
   }
 
   if (action === "cancel-edit") {
     state.editingRailId = null;
+    render();
+    return;
+  }
+
+  if (action === "delete-rail") {
+    deleteRail(id);
+    return;
+  }
+
+  if (action === "stamp-record") {
+    stampRecord(id);
+    return;
+  }
+
+  if (action === "open-record-sheet") {
+    openRecordSheet(id);
+    render();
+    return;
+  }
+
+  if (action === "edit-record") {
+    const record = getSelectedRecord();
+    state.recordSheetMode = "edit";
+    state.recordEditDraft = record ? record.text : "";
+    render();
+    return;
+  }
+
+  if (action === "cancel-record-edit") {
+    state.recordSheetMode = "view";
+    render();
+    return;
+  }
+
+  if (action === "delete-record") {
+    if (window.confirm("이 기록을 지울까요?")) {
+      deleteSelectedRecord(state.selectedRecordId);
+      closeRecordSheet();
+      showToast("기록을 지웠어요.");
+      render();
+    }
+    return;
+  }
+
+  if (action === "close-record-sheet") {
+    closeRecordSheet();
     render();
     return;
   }
@@ -888,11 +1324,13 @@ app.addEventListener("click", (event) => {
 });
 
 app.addEventListener("input", (event) => {
-  if (!event.target.matches(".add-panel input")) {
-    return;
+  if (event.target.matches(".add-panel input")) {
+    updateAddPanelDraft(event.target);
   }
 
-  updateAddPanelDraft(event.target);
+  if (event.target.matches("[name='recordEditText']")) {
+    state.recordEditDraft = event.target.value;
+  }
 });
 
 app.addEventListener("submit", (event) => {
@@ -906,13 +1344,19 @@ app.addEventListener("submit", (event) => {
 
   if (form.dataset.action === "save-rail") {
     const formData = new FormData(form);
+    const id = form.dataset.id;
     const nextItem = {
       time: String(formData.get("time") || "").trim() || "시간",
       title: String(formData.get("title") || "").trim() || "새 항목",
-      note: String(formData.get("note") || "").trim() || "가볍게"
+      note: String(formData.get("note") || "").trim() || "가볍게",
+      timerStatus: "idle",
+      durationSeconds: null,
+      remainingSeconds: null
     };
 
-    updateRailItem(form.dataset.id, nextItem);
+    clearRailTimer(id);
+    updateRailItem(id, nextItem);
+    saveRailItems();
     state.editingRailId = null;
     showToast("레일 수정이 포스트잇에도 반영됐어요.");
     render();
@@ -926,12 +1370,38 @@ app.addEventListener("submit", (event) => {
 
   if (form.dataset.action === "save-new-rail") {
     saveNewRail(form);
+    return;
+  }
+
+  if (form.dataset.action === "save-record-edit") {
+    const formData = new FormData(form);
+    const text = String(formData.get("recordEditText") || "").trim();
+
+    if (!text) {
+      showToast("기록 내용을 적어주세요.");
+      return;
+    }
+
+    updateSelectedRecord(state.selectedRecordId, {
+      text,
+      icon: getRecordIcon(text),
+      category: getRecordCategory(text)
+    });
+    state.recordSheetMode = "view";
+    state.recordEditDraft = text;
+    showToast("기록을 수정했어요.");
+    render();
   }
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && state.addPanelOpen) {
-    closeAddPanel();
+  if (event.key === "Escape") {
+    if (state.addPanelOpen) {
+      closeAddPanel();
+    }
+
+    state.datePanelOpen = false;
+    closeRecordSheet();
     render();
   }
 });
