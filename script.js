@@ -6,6 +6,16 @@ const state = {
   editingRailId: null,
   addPanelOpen: false,
   addPanelMode: "record",
+  addPanelDraft: {
+    record: {
+      recordText: ""
+    },
+    rail: {
+      time: "",
+      title: "",
+      note: ""
+    }
+  },
   toastMessage: "",
   railItems: [
     {
@@ -467,7 +477,8 @@ function renderRecordForm() {
     label: "기록 내용",
     name: "recordText",
     placeholder: "예: 물 한 컵 마심",
-    maxLength: 44
+    maxLength: 44,
+    value: state.addPanelDraft.record.recordText
   });
 
   const actions = renderPanelActions("기록하기");
@@ -484,19 +495,22 @@ function renderRailAddForm() {
       label: "시작 시간",
       name: "time",
       placeholder: "예: 4시",
-      maxLength: 8
+      maxLength: 8,
+      value: state.addPanelDraft.rail.time
     }),
     renderPanelField({
       label: "활동명",
       name: "title",
       placeholder: "예: 집안일 정리",
-      maxLength: 28
+      maxLength: 28,
+      value: state.addPanelDraft.rail.title
     }),
     renderPanelField({
       label: "보조 문구",
       name: "note",
       placeholder: "예: 15분만",
-      maxLength: 32
+      maxLength: 32,
+      value: state.addPanelDraft.rail.note
     }),
     renderPanelActions("추가")
   );
@@ -504,7 +518,7 @@ function renderRailAddForm() {
   return form;
 }
 
-function renderPanelField({ label, name, placeholder, maxLength }) {
+function renderPanelField({ label, name, placeholder, maxLength, value = "" }) {
   const wrap = createElement("label", "panel-field");
   wrap.append(createElement("span", null, label));
 
@@ -512,6 +526,7 @@ function renderPanelField({ label, name, placeholder, maxLength }) {
   input.name = name;
   input.placeholder = placeholder;
   input.maxLength = maxLength;
+  input.value = value;
   input.autocomplete = "off";
 
   wrap.append(input);
@@ -587,11 +602,41 @@ function scrollToSection(sectionId) {
 function openAddPanel(mode = "record") {
   state.addPanelOpen = true;
   state.addPanelMode = mode;
+  resetAddPanelDraft();
   state.editingRailId = null;
 }
 
 function closeAddPanel() {
   state.addPanelOpen = false;
+  resetAddPanelDraft();
+}
+
+function resetAddPanelDraft() {
+  state.addPanelDraft = {
+    record: {
+      recordText: ""
+    },
+    rail: {
+      time: "",
+      title: "",
+      note: ""
+    }
+  };
+}
+
+function updateAddPanelDraft(input) {
+  if (!state.addPanelOpen || !input.name) {
+    return;
+  }
+
+  const mode = state.addPanelMode;
+  state.addPanelDraft = {
+    ...state.addPanelDraft,
+    [mode]: {
+      ...state.addPanelDraft[mode],
+      [input.name]: input.value
+    }
+  };
 }
 
 function getRecordIcon(text) {
@@ -761,6 +806,10 @@ app.addEventListener("click", (event) => {
 
   const { action, id } = actionTarget.dataset;
 
+  if (action === "close-add-panel" && actionTarget.classList.contains("add-panel-overlay") && event.target !== actionTarget) {
+    return;
+  }
+
   if (action === "start-rail") {
     startRailTimer(id);
     return;
@@ -836,6 +885,14 @@ app.addEventListener("click", (event) => {
     showToast("나의 흐름 화면은 준비 중이에요.");
     render();
   }
+});
+
+app.addEventListener("input", (event) => {
+  if (!event.target.matches(".add-panel input")) {
+    return;
+  }
+
+  updateAddPanelDraft(event.target);
 });
 
 app.addEventListener("submit", (event) => {
