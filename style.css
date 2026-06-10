@@ -338,6 +338,18 @@ h1 {
   color: #687950;
 }
 
+.rail-timer-button {
+  min-width: 66px;
+  padding: 0 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.rail-timer-button.is-ready-to-record {
+  background: rgba(217, 173, 104, 0.24);
+  color: #a7662c;
+}
+
 .icon-button {
   width: 34px;
   height: 34px;
@@ -793,6 +805,11 @@ h1 {
   .pill-button {
     min-width: 52px;
     padding: 0 12px;
+  }
+
+  .rail-timer-button {
+    min-width: 62px;
+    padding: 0 10px;
   }
 
   .icon-button {

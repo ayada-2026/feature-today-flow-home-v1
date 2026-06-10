@@ -63,6 +63,7 @@ const state = {
 };
 
 let toastTimer = null;
+const railTimerIntervals = new Map();
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -216,10 +217,15 @@ function renderRailMain(item) {
 
 function renderRailActions(item) {
   const actions = createElement("div", "rail-actions");
-  const startButton = createButton("pill-button", item.started ? "진행중" : "시작", "toggle-start", item.id);
+  const timerStatus = item.timerStatus || "idle";
+  const startButton = createButton("pill-button rail-timer-button", getRailButtonLabel(item), getRailButtonAction(item), item.id);
 
-  if (item.started) {
+  if (timerStatus === "running") {
     startButton.classList.add("is-started");
+  }
+
+  if (timerStatus === "done") {
+    startButton.classList.add("is-ready-to-record");
   }
 
   const editButton = createButton("icon-button", "✎", "edit-rail", item.id);
@@ -322,6 +328,61 @@ function renderSummary() {
 
 function countRecordsByCategory(category) {
   return state.records.filter((record) => record.category === category).length;
+}
+
+function getRailDurationSeconds(item) {
+  const note = item.note || "";
+  const minuteMatch = note.match(/(\d+)\s*분/);
+
+  if (minuteMatch) {
+    return Number(minuteMatch[1]) * 60;
+  }
+
+  if (note.includes("시작만")) {
+    return 5 * 60;
+  }
+
+  return 5 * 60;
+}
+
+function formatRemainingTime(totalSeconds) {
+  const seconds = Math.max(0, Number(totalSeconds) || 0);
+  const minutesPart = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const secondsPart = String(seconds % 60).padStart(2, "0");
+  return `${minutesPart}:${secondsPart}`;
+}
+
+function getRailButtonLabel(item) {
+  const timerStatus = item.timerStatus || "idle";
+
+  if (timerStatus === "running") {
+    return formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item));
+  }
+
+  if (timerStatus === "done") {
+    return "기록";
+  }
+
+  return "시작";
+}
+
+function getRailButtonAction(item) {
+  const timerStatus = item.timerStatus || "idle";
+
+  if (timerStatus === "running") {
+    return "timer-running";
+  }
+
+  if (timerStatus === "done") {
+    return "record-rail";
+  }
+
+  return "start-rail";
+}
+
+function formatDurationForRecord(totalSeconds) {
+  const minutes = Math.max(1, Math.round(totalSeconds / 60));
+  return `${minutes}분`;
 }
 
 function renderTabBar() {
@@ -479,6 +540,17 @@ function updateRailItem(id, nextValues) {
   ));
 }
 
+function clearRailTimer(id) {
+  const timer = railTimerIntervals.get(id);
+
+  if (!timer) {
+    return;
+  }
+
+  clearInterval(timer);
+  railTimerIntervals.delete(id);
+}
+
 function announce(message) {
   liveRegion.textContent = message;
 }
@@ -587,13 +659,97 @@ function saveNewRail(form) {
       time,
       title,
       note: note || "가볍게",
-      started: false
+      started: false,
+      timerStatus: "idle"
     }
   ];
   closeAddPanel();
   showToast("오늘의 레일에 추가했어요.");
   render();
   scrollToSection("railSection");
+}
+
+function startRailTimer(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item) {
+    return;
+  }
+
+  const durationSeconds = getRailDurationSeconds(item);
+  clearRailTimer(id);
+  updateRailItem(id, {
+    started: true,
+    timerStatus: "running",
+    durationSeconds,
+    remainingSeconds: durationSeconds
+  });
+  render();
+
+  const intervalId = setInterval(() => {
+    tickRailTimer(id);
+  }, 1000);
+
+  railTimerIntervals.set(id, intervalId);
+}
+
+function tickRailTimer(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item || item.timerStatus !== "running") {
+    clearRailTimer(id);
+    return;
+  }
+
+  const nextRemaining = Math.max(0, (item.remainingSeconds ?? getRailDurationSeconds(item)) - 1);
+
+  if (nextRemaining === 0) {
+    clearRailTimer(id);
+    updateRailItem(id, {
+      remainingSeconds: 0,
+      timerStatus: "done"
+    });
+    showToast(`${item.title} 기록할 준비가 됐어요.`);
+    render();
+    return;
+  }
+
+  updateRailItem(id, {
+    remainingSeconds: nextRemaining
+  });
+  render();
+}
+
+function recordRailResult(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item) {
+    return;
+  }
+
+  const durationSeconds = item.durationSeconds || getRailDurationSeconds(item);
+  const recordText = `${item.title} ${formatDurationForRecord(durationSeconds)} 함`;
+
+  state.records = [
+    {
+      id: `record-${Date.now()}`,
+      icon: getRecordIcon(recordText),
+      text: recordText,
+      category: getRecordCategory(recordText),
+      stamped: true
+    },
+    ...state.records
+  ];
+  updateRailItem(id, {
+    started: false,
+    timerStatus: "idle",
+    durationSeconds: null,
+    remainingSeconds: null
+  });
+  state.activeTab = "records";
+  showToast("오늘 기록에 남겼어요.");
+  render();
+  scrollToSection("recordsSection");
 }
 
 app.addEventListener("click", (event) => {
@@ -605,11 +761,17 @@ app.addEventListener("click", (event) => {
 
   const { action, id } = actionTarget.dataset;
 
-  if (action === "toggle-start") {
-    const item = state.railItems.find((railItem) => railItem.id === id);
-    updateRailItem(id, { started: !item.started });
-    showToast(`${item.title} ${item.started ? "시작을 취소했어요." : "시작했어요."}`);
-    render();
+  if (action === "start-rail") {
+    startRailTimer(id);
+    return;
+  }
+
+  if (action === "timer-running") {
+    return;
+  }
+
+  if (action === "record-rail") {
+    recordRailResult(id);
     return;
   }
 
