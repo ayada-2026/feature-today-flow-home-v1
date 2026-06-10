@@ -33,12 +33,14 @@ const state = {
   activeTab: "home",
   selectedDateKey: todayKey,
   editingRailId: null,
+  pendingRailDeleteId: null,
   addPanelOpen: false,
   addPanelMode: "record",
   datePanelOpen: false,
   recordSheetOpen: false,
   recordSheetMode: "view",
   selectedRecordId: null,
+  pendingRecordDeleteId: null,
   recordEditDraft: "",
   stampingRecordId: null,
   stampingRecordDateKey: null,
@@ -281,10 +283,17 @@ function renderHero() {
 
   titleBlock.append(eyebrow, title, subtitle);
 
-  const datePill = createButton("date-pill", "", "open-date-panel");
-  datePill.setAttribute("aria-label", "날짜 선택");
-  datePill.append(createElement("span", null, "📅"));
-  datePill.append(createElement("span", null, formatDateLabel(state.selectedDateKey)));
+  const datePill = createElement("div", "date-pill");
+  datePill.setAttribute("aria-label", "날짜 이동");
+  const previousDateButton = createButton("date-arrow-button", "‹", "shift-date", "-1");
+  previousDateButton.setAttribute("aria-label", "전날로 이동");
+  const nextDateButton = createButton("date-arrow-button", "›", "shift-date", "1");
+  nextDateButton.setAttribute("aria-label", "다음날로 이동");
+  datePill.append(
+    previousDateButton,
+    createElement("span", "date-label", formatDateLabel(state.selectedDateKey)),
+    nextDateButton
+  );
 
   titleRow.append(titleBlock, datePill);
   copy.append(titleRow);
@@ -385,6 +394,19 @@ function renderRailActions(item) {
 }
 
 function renderRailEditor(item) {
+  if (state.pendingRailDeleteId === item.id) {
+    const confirm = createElement("div", "rail-delete-confirm");
+    confirm.append(createElement("p", "rail-delete-question", "이 레일을 지울까요?"));
+
+    const actions = createElement("div", "rail-delete-confirm-actions");
+    actions.append(
+      createButton("pill-button rail-secondary-button", "취소", "cancel-rail-delete", item.id),
+      createButton("record-delete-confirm-button", "지우기", "confirm-rail-delete", item.id)
+    );
+    confirm.append(actions);
+    return confirm;
+  }
+
   const form = createElement("form", "rail-edit");
   form.dataset.action = "save-rail";
   form.dataset.id = item.id;
@@ -754,7 +776,12 @@ function renderRecordSheet() {
   panel.setAttribute("aria-labelledby", "recordSheetTitle");
 
   const handle = createElement("span", "panel-handle");
-  const title = createElement("h2", null, state.recordSheetMode === "edit" ? "기록 수정하기" : "기록 관리하기");
+  const titleText = state.recordSheetMode === "edit"
+    ? "기록 수정하기"
+    : state.recordSheetMode === "delete"
+      ? "기록 지우기"
+      : "기록 관리하기";
+  const title = createElement("h2", null, titleText);
   title.id = "recordSheetTitle";
   panel.append(handle, title);
 
@@ -786,6 +813,8 @@ function renderRecordSheet() {
     );
     form.append(actions);
     panel.append(form);
+  } else if (state.recordSheetMode === "delete") {
+    panel.append(renderRecordDeleteConfirm());
   } else {
     panel.append(createElement("p", "panel-subtitle", `${formatDateLabel(state.selectedDateKey)} 기록을 정리해요.`));
     panel.append(renderRecordManageList());
@@ -793,6 +822,36 @@ function renderRecordSheet() {
 
   overlay.append(panel);
   return overlay;
+}
+
+function renderRecordDeleteConfirm() {
+  const record = getSelectedRecord();
+  const wrap = createElement("div", "record-delete-confirm");
+
+  if (!record) {
+    state.recordSheetMode = "view";
+    state.selectedRecordId = null;
+    state.pendingRecordDeleteId = null;
+    return renderRecordManageList();
+  }
+
+  wrap.append(createElement("p", "record-delete-question", "이 기록을 지울까요?"));
+
+  const target = createElement("div", "record-delete-target");
+  target.append(
+    createElement("span", "record-emoji", record.icon),
+    createElement("span", "record-manage-text", record.text)
+  );
+  wrap.append(target);
+
+  const actions = createElement("div", "record-delete-actions");
+  actions.append(
+    createButton("panel-cancel", "취소", "cancel-record-delete"),
+    createButton("record-delete-confirm-button", "지우기", "confirm-record-delete")
+  );
+  wrap.append(actions);
+
+  return wrap;
 }
 
 function renderRecordManageList() {
@@ -889,6 +948,7 @@ function openAddPanel(mode = "record") {
   state.addPanelMode = mode;
   resetAddPanelDraft();
   state.editingRailId = null;
+  state.pendingRailDeleteId = null;
   state.datePanelOpen = false;
   state.recordSheetOpen = false;
 }
@@ -1109,13 +1169,14 @@ function recordRailResult(id) {
 function deleteRail(id) {
   const item = state.railItems.find((railItem) => railItem.id === id);
 
-  if (!item || !window.confirm("이 레일을 지울까요?")) {
+  if (!item) {
     return;
   }
 
   clearRailTimer(id);
   state.railItems = state.railItems.filter((railItem) => railItem.id !== id);
   state.editingRailId = null;
+  state.pendingRailDeleteId = null;
   saveRailItems();
   showToast("레일을 지웠어요.");
   render();
@@ -1150,6 +1211,8 @@ function stampRecord(id) {
 
 function openRecordSheet() {
   state.selectedRecordId = null;
+  state.pendingRecordDeleteId = null;
+  state.pendingRailDeleteId = null;
   state.recordEditDraft = "";
   state.recordSheetMode = "view";
   state.recordSheetOpen = true;
@@ -1160,6 +1223,7 @@ function openRecordSheet() {
 function closeRecordSheet() {
   state.recordSheetOpen = false;
   state.selectedRecordId = null;
+  state.pendingRecordDeleteId = null;
   state.recordEditDraft = "";
   state.recordSheetMode = "view";
 }
@@ -1167,6 +1231,7 @@ function closeRecordSheet() {
 function changeSelectedDate(nextDateKey) {
   state.selectedDateKey = nextDateKey;
   state.activeTab = "home";
+  state.pendingRailDeleteId = null;
   closeRecordSheet();
   closeAddPanel();
 }
@@ -1203,13 +1268,13 @@ app.addEventListener("click", (event) => {
   }
 
   if (action === "shift-date") {
-    state.selectedDateKey = shiftDateKey(state.selectedDateKey, Number(id));
+    changeSelectedDate(shiftDateKey(state.selectedDateKey, Number(id)));
     render();
     return;
   }
 
   if (action === "select-today") {
-    state.selectedDateKey = todayKey;
+    changeSelectedDate(todayKey);
     render();
     return;
   }
@@ -1236,6 +1301,7 @@ app.addEventListener("click", (event) => {
 
   if (action === "edit-rail") {
     state.editingRailId = state.editingRailId === id ? null : id;
+    state.pendingRailDeleteId = null;
     state.addPanelOpen = false;
     state.datePanelOpen = false;
     state.recordSheetOpen = false;
@@ -1245,11 +1311,25 @@ app.addEventListener("click", (event) => {
 
   if (action === "cancel-edit") {
     state.editingRailId = null;
+    state.pendingRailDeleteId = null;
     render();
     return;
   }
 
   if (action === "delete-rail") {
+    state.editingRailId = id;
+    state.pendingRailDeleteId = id;
+    render();
+    return;
+  }
+
+  if (action === "cancel-rail-delete") {
+    state.pendingRailDeleteId = null;
+    render();
+    return;
+  }
+
+  if (action === "confirm-rail-delete") {
     deleteRail(id);
     return;
   }
@@ -1261,6 +1341,7 @@ app.addEventListener("click", (event) => {
 
   if (action === "edit-record") {
     state.selectedRecordId = id;
+    state.pendingRecordDeleteId = null;
     const record = getSelectedRecord();
     state.recordSheetMode = "edit";
     state.recordEditDraft = record ? record.text : "";
@@ -1277,9 +1358,31 @@ app.addEventListener("click", (event) => {
   if (action === "delete-record") {
     const recordId = id || state.selectedRecordId;
 
-    if (recordId && window.confirm("이 기록을 지울까요?")) {
+    if (recordId) {
+      state.selectedRecordId = recordId;
+      state.pendingRecordDeleteId = recordId;
+      state.recordEditDraft = "";
+      state.recordSheetMode = "delete";
+      render();
+    }
+    return;
+  }
+
+  if (action === "cancel-record-delete") {
+    state.selectedRecordId = null;
+    state.pendingRecordDeleteId = null;
+    state.recordSheetMode = "view";
+    render();
+    return;
+  }
+
+  if (action === "confirm-record-delete") {
+    const recordId = state.pendingRecordDeleteId || state.selectedRecordId;
+
+    if (recordId) {
       deleteSelectedRecord(recordId);
       state.selectedRecordId = null;
+      state.pendingRecordDeleteId = null;
       state.recordEditDraft = "";
       state.recordSheetMode = "view";
       showToast("기록을 지웠어요.");
@@ -1379,6 +1482,7 @@ app.addEventListener("submit", (event) => {
     updateRailItem(id, nextItem);
     saveRailItems();
     state.editingRailId = null;
+    state.pendingRailDeleteId = null;
     showToast("레일 수정이 포스트잇에도 반영됐어요.");
     render();
     return;
@@ -1409,6 +1513,7 @@ app.addEventListener("submit", (event) => {
       category: getRecordCategory(text)
     });
     state.recordSheetMode = "view";
+    state.pendingRecordDeleteId = null;
     state.recordEditDraft = text;
     showToast("기록을 수정했어요.");
     render();

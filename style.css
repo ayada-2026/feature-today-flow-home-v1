@@ -211,29 +211,51 @@ h1 {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 4px;
   min-height: 46px;
-  padding: 0 15px;
+  padding: 0 8px;
   border: 1px solid rgba(126, 91, 62, 0.12);
   border-radius: 999px;
   background: rgba(255, 253, 249, 0.86);
   color: #7b6655;
   box-shadow: 0 10px 20px rgba(92, 66, 38, 0.09);
   white-space: nowrap;
+}
+
+.date-arrow-button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #a07057;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
   cursor: pointer;
-  transition: transform 0.14s ease, border-color 0.14s ease;
+  transition: background-color 0.14s ease, color 0.14s ease, transform 0.14s ease;
 }
 
-.date-pill:focus-visible {
+.date-arrow-button:hover,
+.date-arrow-button:focus-visible {
   outline: 0;
-  border-color: rgba(223, 118, 89, 0.48);
-  box-shadow:
-    0 10px 20px rgba(92, 66, 38, 0.09),
-    0 0 0 3px rgba(223, 118, 89, 0.13);
+  background: rgba(223, 118, 89, 0.1);
+  color: #cf6f55;
 }
 
-.date-pill:active {
+.date-arrow-button:active {
   transform: translateY(1px);
+}
+
+.date-label {
+  min-width: 118px;
+  padding: 0 2px;
+  color: #7b6655;
+  font-size: 0.94rem;
+  font-weight: 850;
+  text-align: center;
 }
 
 .section-stack {
@@ -439,6 +461,27 @@ h1 {
   color: #aa5741;
   font-weight: 900;
   justify-self: start;
+}
+
+.rail-delete-confirm {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(205, 95, 68, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.rail-delete-question {
+  color: #5a4335;
+  font-weight: 900;
+}
+
+.rail-delete-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .record-item {
@@ -882,6 +925,49 @@ h1 {
   font-size: 0.88rem;
 }
 
+.record-delete-confirm {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.record-delete-question {
+  color: #4a3b31;
+  font-size: 1.02rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.record-delete-target {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(128, 92, 60, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.record-delete-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 2px;
+}
+
+.record-delete-confirm-button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: #dc7b64;
+  color: #fff9f3;
+  font-weight: 900;
+  box-shadow: 0 9px 18px rgba(205, 95, 68, 0.2);
+}
+
 .record-sheet-close {
   width: 100%;
   margin-top: 2px;
@@ -978,7 +1064,17 @@ h1 {
   .date-pill {
     justify-self: end;
     min-height: 40px;
-    padding: 0 11px;
+    padding: 0 6px;
+  }
+
+  .date-arrow-button {
+    width: 29px;
+    height: 29px;
+    font-size: 1.18rem;
+  }
+
+  .date-label {
+    min-width: 104px;
     font-size: 0.82rem;
   }
 
