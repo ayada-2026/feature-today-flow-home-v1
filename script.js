@@ -436,13 +436,13 @@ function renderTodayRecords() {
 
   records.forEach((record) => {
     const item = createElement("li", "record-item");
-    item.dataset.action = "open-record-sheet";
-    item.dataset.id = record.id;
-    item.append(
+    const display = createElement("div", "record-display");
+    display.append(
       createElement("span", "record-emoji", record.icon),
-      createElement("span", "record-text", record.text),
-      renderStampButton(record)
+      createElement("span", "record-text", record.text)
     );
+
+    item.append(display, renderStampButton(record));
     list.append(item);
   });
 
@@ -746,13 +746,6 @@ function renderDatePanel() {
 }
 
 function renderRecordSheet() {
-  const record = getSelectedRecord();
-
-  if (!record) {
-    state.recordSheetOpen = false;
-    return document.createDocumentFragment();
-  }
-
   const overlay = createElement("div", "add-panel-overlay sheet-overlay");
   overlay.dataset.action = "close-record-sheet";
   const panel = createElement("section", "add-panel record-sheet");
@@ -761,11 +754,19 @@ function renderRecordSheet() {
   panel.setAttribute("aria-labelledby", "recordSheetTitle");
 
   const handle = createElement("span", "panel-handle");
-  const title = createElement("h2", null, state.recordSheetMode === "edit" ? "기록 수정하기" : "기록 살펴보기");
+  const title = createElement("h2", null, state.recordSheetMode === "edit" ? "기록 수정하기" : "기록 관리하기");
   title.id = "recordSheetTitle";
   panel.append(handle, title);
 
   if (state.recordSheetMode === "edit") {
+    const record = getSelectedRecord();
+
+    if (!record) {
+      state.recordSheetMode = "view";
+      state.selectedRecordId = null;
+      return renderRecordSheet();
+    }
+
     const form = createElement("form", "panel-form");
     form.dataset.action = "save-record-edit";
     form.append(renderPanelField({
@@ -786,18 +787,45 @@ function renderRecordSheet() {
     form.append(actions);
     panel.append(form);
   } else {
-    panel.append(createElement("p", "record-sheet-text", record.text));
-    const actions = createElement("div", "record-sheet-actions");
-    actions.append(
-      createButton("panel-save", "수정하기", "edit-record"),
-      createButton("rail-delete-button", "삭제하기", "delete-record"),
-      createButton("panel-cancel", "취소", "close-record-sheet")
-    );
-    panel.append(actions);
+    panel.append(createElement("p", "panel-subtitle", `${formatDateLabel(state.selectedDateKey)} 기록을 정리해요.`));
+    panel.append(renderRecordManageList());
   }
 
   overlay.append(panel);
   return overlay;
+}
+
+function renderRecordManageList() {
+  const wrap = createElement("div", "record-manage-list");
+  const records = getSelectedRecords();
+
+  if (records.length === 0) {
+    wrap.append(createElement("p", "record-empty", "이 날짜에는 아직 관리할 기록이 없어요."));
+    wrap.append(createButton("panel-cancel record-sheet-close", "닫기", "close-record-sheet"));
+    return wrap;
+  }
+
+  records.forEach((record) => {
+    const item = createElement("article", "record-manage-item");
+    const main = createElement("div", "record-manage-main");
+    main.append(
+      createElement("span", "record-emoji", record.icon),
+      createElement("span", "record-manage-text", record.text)
+    );
+
+    const status = createElement("span", "record-manage-stamp", record.stamped ? "도장 찍힘" : "도장 전");
+    const actions = createElement("div", "record-manage-actions");
+    actions.append(
+      createButton("panel-save compact-action", "수정", "edit-record", record.id),
+      createButton("rail-delete-button compact-action", "삭제", "delete-record", record.id)
+    );
+
+    item.append(main, status, actions);
+    wrap.append(item);
+  });
+
+  wrap.append(createButton("panel-cancel record-sheet-close", "닫기", "close-record-sheet"));
+  return wrap;
 }
 
 function renderToast() {
@@ -1120,15 +1148,9 @@ function stampRecord(id) {
   }, 240);
 }
 
-function openRecordSheet(id) {
-  const record = getSelectedRecords().find((item) => item.id === id);
-
-  if (!record) {
-    return;
-  }
-
-  state.selectedRecordId = id;
-  state.recordEditDraft = record.text;
+function openRecordSheet() {
+  state.selectedRecordId = null;
+  state.recordEditDraft = "";
   state.recordSheetMode = "view";
   state.recordSheetOpen = true;
   state.addPanelOpen = false;
@@ -1237,13 +1259,8 @@ app.addEventListener("click", (event) => {
     return;
   }
 
-  if (action === "open-record-sheet") {
-    openRecordSheet(id);
-    render();
-    return;
-  }
-
   if (action === "edit-record") {
+    state.selectedRecordId = id;
     const record = getSelectedRecord();
     state.recordSheetMode = "edit";
     state.recordEditDraft = record ? record.text : "";
@@ -1258,9 +1275,13 @@ app.addEventListener("click", (event) => {
   }
 
   if (action === "delete-record") {
-    if (window.confirm("이 기록을 지울까요?")) {
-      deleteSelectedRecord(state.selectedRecordId);
-      closeRecordSheet();
+    const recordId = id || state.selectedRecordId;
+
+    if (recordId && window.confirm("이 기록을 지울까요?")) {
+      deleteSelectedRecord(recordId);
+      state.selectedRecordId = null;
+      state.recordEditDraft = "";
+      state.recordSheetMode = "view";
       showToast("기록을 지웠어요.");
       render();
     }
@@ -1282,8 +1303,8 @@ app.addEventListener("click", (event) => {
 
   if (action === "go-records") {
     state.activeTab = "records";
+    openRecordSheet();
     render();
-    scrollToSection("recordsSection");
     return;
   }
 
