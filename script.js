@@ -4,6 +4,9 @@ const liveRegion = document.getElementById("liveRegion");
 const state = {
   activeTab: "home",
   editingRailId: null,
+  addPanelOpen: false,
+  addPanelMode: "record",
+  toastMessage: "",
   railItems: [
     {
       id: "rail-premiere",
@@ -59,6 +62,8 @@ const state = {
   ]
 };
 
+let toastTimer = null;
+
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
 
@@ -102,10 +107,19 @@ function render() {
 
   app.append(shell);
   app.append(renderTabBar());
+
+  if (state.addPanelOpen) {
+    app.append(renderAddPanel());
+  }
+
+  if (state.toastMessage) {
+    app.append(renderToast());
+  }
 }
 
 function renderHero() {
   const hero = createElement("section", "hero");
+  hero.id = "homeSection";
   hero.setAttribute("aria-labelledby", "pageTitle");
 
   hero.append(renderPostIts());
@@ -135,7 +149,7 @@ function renderHero() {
 
 function renderPostIts() {
   const layer = createElement("div", "sticky-layer");
-  const shownItems = state.railItems.slice(0, 3);
+  const shownItems = state.railItems.slice(-3);
 
   shownItems.forEach((item) => {
     const note = createElement("article", "post-it");
@@ -159,6 +173,7 @@ function renderSectionStack() {
 
 function renderTodayRail() {
   const section = renderCardShell("🚂", "오늘의 레일");
+  section.id = "railSection";
   const list = createElement("ul", "rail-list");
 
   state.railItems.forEach((item) => {
@@ -238,13 +253,14 @@ function renderRailEditor(item) {
   return form;
 }
 
-function renderInputRow(labelText, name, value, maxLength) {
+function renderInputRow(labelText, name, value, maxLength, placeholder = "") {
   const fragment = document.createDocumentFragment();
   const label = createElement("label", null, labelText);
   const input = createElement("input");
   input.name = name;
   input.value = value;
   input.maxLength = maxLength;
+  input.placeholder = placeholder;
 
   fragment.append(label, input);
   return fragment;
@@ -252,6 +268,7 @@ function renderInputRow(labelText, name, value, maxLength) {
 
 function renderTodayRecords() {
   const section = renderCardShell("📝", "오늘 기록");
+  section.id = "recordsSection";
   const list = createElement("ul", "record-list");
 
   state.records.forEach((record) => {
@@ -312,22 +329,22 @@ function renderTabBar() {
   nav.setAttribute("aria-label", "하단 탭");
 
   const tabs = [
-    { id: "home", icon: "⌂", label: "홈" },
-    { id: "records", icon: "▤", label: "기록" },
-    { id: "add", icon: "+", label: "" },
-    { id: "stamps", icon: "♙", label: "스탬프" },
-    { id: "my-flow", icon: "♡", label: "나의 흐름" }
+    { id: "home", icon: "⌂", label: "홈", action: "go-home" },
+    { id: "records", icon: "▤", label: "기록", action: "go-records" },
+    { id: "add", icon: "+", label: "", action: "open-add-panel" },
+    { id: "stamps", icon: "♙", label: "스탬프", action: "show-stamps" },
+    { id: "my-flow", icon: "♡", label: "나의 흐름", action: "show-my-flow" }
   ];
 
   tabs.forEach((tab) => {
     if (tab.id === "add") {
-      const addButton = createButton("add-tab", tab.icon, "add-record");
-      addButton.setAttribute("aria-label", "기록 추가");
+      const addButton = createButton("add-tab", tab.icon, tab.action);
+      addButton.setAttribute("aria-label", "남기기 패널 열기");
       nav.append(addButton);
       return;
     }
 
-    const button = createButton("tab-button", "", "change-tab", tab.id);
+    const button = createButton("tab-button", "", tab.action, tab.id);
 
     if (state.activeTab === tab.id) {
       button.classList.add("is-active");
@@ -340,6 +357,122 @@ function renderTabBar() {
   return nav;
 }
 
+function renderAddPanel() {
+  const overlay = createElement("div", "add-panel-overlay");
+  overlay.dataset.action = "close-add-panel";
+
+  const panel = createElement("section", "add-panel");
+  panel.setAttribute("aria-labelledby", "addPanelTitle");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+
+  const handle = createElement("span", "panel-handle");
+  const title = createElement("h2", null, "무엇을 남길까요?");
+  title.id = "addPanelTitle";
+  const subtitle = createElement("p", "panel-subtitle", "오늘의 작은 흐름을 가볍게 남겨보세요.");
+
+  panel.append(handle, title, subtitle, renderPanelModeTabs());
+
+  if (state.addPanelMode === "record") {
+    panel.append(renderRecordForm());
+  } else {
+    panel.append(renderRailAddForm());
+  }
+
+  overlay.append(panel);
+  return overlay;
+}
+
+function renderPanelModeTabs() {
+  const modeTabs = createElement("div", "panel-mode-tabs");
+  const recordButton = createButton("panel-mode-button", "오늘 한 일 기록하기", "set-panel-mode", "record");
+  const railButton = createButton("panel-mode-button", "오늘의 레일 추가하기", "set-panel-mode", "rail");
+
+  if (state.addPanelMode === "record") {
+    recordButton.classList.add("is-active");
+  } else {
+    railButton.classList.add("is-active");
+  }
+
+  modeTabs.append(recordButton, railButton);
+  return modeTabs;
+}
+
+function renderRecordForm() {
+  const form = createElement("form", "panel-form");
+  form.dataset.action = "save-record";
+
+  const field = renderPanelField({
+    label: "기록 내용",
+    name: "recordText",
+    placeholder: "예: 물 한 컵 마심",
+    maxLength: 44
+  });
+
+  const actions = renderPanelActions("기록하기");
+  form.append(field, actions);
+  return form;
+}
+
+function renderRailAddForm() {
+  const form = createElement("form", "panel-form");
+  form.dataset.action = "save-new-rail";
+
+  form.append(
+    renderPanelField({
+      label: "시작 시간",
+      name: "time",
+      placeholder: "예: 4시",
+      maxLength: 8
+    }),
+    renderPanelField({
+      label: "활동명",
+      name: "title",
+      placeholder: "예: 집안일 정리",
+      maxLength: 28
+    }),
+    renderPanelField({
+      label: "보조 문구",
+      name: "note",
+      placeholder: "예: 15분만",
+      maxLength: 32
+    }),
+    renderPanelActions("추가")
+  );
+
+  return form;
+}
+
+function renderPanelField({ label, name, placeholder, maxLength }) {
+  const wrap = createElement("label", "panel-field");
+  wrap.append(createElement("span", null, label));
+
+  const input = createElement("input");
+  input.name = name;
+  input.placeholder = placeholder;
+  input.maxLength = maxLength;
+  input.autocomplete = "off";
+
+  wrap.append(input);
+  return wrap;
+}
+
+function renderPanelActions(saveText) {
+  const actions = createElement("div", "panel-actions");
+  const cancelButton = createButton("panel-cancel", "취소", "close-add-panel");
+  const saveButton = createElement("button", "panel-save", saveText);
+  saveButton.type = "submit";
+
+  actions.append(cancelButton, saveButton);
+  return actions;
+}
+
+function renderToast() {
+  const toast = createElement("div", "toast", state.toastMessage);
+  toast.setAttribute("role", "status");
+  return toast;
+}
+
 function updateRailItem(id, nextValues) {
   state.railItems = state.railItems.map((item) => (
     item.id === id ? { ...item, ...nextValues } : item
@@ -350,43 +483,201 @@ function announce(message) {
   liveRegion.textContent = message;
 }
 
-app.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
+function showToast(message) {
+  state.toastMessage = message;
+  announce(message);
 
-  if (!button) {
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toastTimer = setTimeout(() => {
+    state.toastMessage = "";
+    render();
+  }, 1800);
+}
+
+function scrollToSection(sectionId) {
+  window.requestAnimationFrame(() => {
+    const target = document.getElementById(sectionId);
+
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  });
+}
+
+function openAddPanel(mode = "record") {
+  state.addPanelOpen = true;
+  state.addPanelMode = mode;
+  state.editingRailId = null;
+}
+
+function closeAddPanel() {
+  state.addPanelOpen = false;
+}
+
+function getRecordIcon(text) {
+  if (text.includes("물")) return "🥛";
+  if (text.includes("세수") || text.includes("씻")) return "🫧";
+  if (text.includes("설거지") || text.includes("집안")) return "🍽";
+  if (text.includes("스트레칭") || text.includes("운동")) return "🌱";
+  if (text.includes("프리미어") || text.includes("편집")) return "🎬";
+  return "✦";
+}
+
+function getRecordCategory(text) {
+  if (text.includes("물") || text.includes("세수") || text.includes("스트레칭") || text.includes("운동")) {
+    return "care";
+  }
+
+  if (text.includes("설거지") || text.includes("집안") || text.includes("정리")) {
+    return "chore";
+  }
+
+  return "record";
+}
+
+function saveRecord(form) {
+  const formData = new FormData(form);
+  const text = String(formData.get("recordText") || "").trim();
+
+  if (!text) {
+    showToast("남길 내용을 적어주세요.");
     return;
   }
 
-  const { action, id } = button.dataset;
+  state.records = [
+    {
+      id: `record-${Date.now()}`,
+      icon: getRecordIcon(text),
+      text,
+      category: getRecordCategory(text),
+      stamped: true
+    },
+    ...state.records
+  ];
+  state.activeTab = "records";
+  closeAddPanel();
+  showToast("오늘 기록에 남겼어요.");
+  render();
+  scrollToSection("recordsSection");
+}
+
+function saveNewRail(form) {
+  const formData = new FormData(form);
+  const time = String(formData.get("time") || "").trim();
+  const title = String(formData.get("title") || "").trim();
+  const note = String(formData.get("note") || "").trim();
+
+  if (!time || !title) {
+    showToast("시간과 활동명을 적어주세요.");
+    return;
+  }
+
+  state.railItems = [
+    ...state.railItems,
+    {
+      id: `rail-${Date.now()}`,
+      time,
+      title,
+      note: note || "가볍게",
+      started: false
+    }
+  ];
+  closeAddPanel();
+  showToast("오늘의 레일에 추가했어요.");
+  render();
+  scrollToSection("railSection");
+}
+
+app.addEventListener("click", (event) => {
+  const actionTarget = event.target.closest("[data-action]");
+
+  if (!actionTarget) {
+    return;
+  }
+
+  const { action, id } = actionTarget.dataset;
 
   if (action === "toggle-start") {
     const item = state.railItems.find((railItem) => railItem.id === id);
     updateRailItem(id, { started: !item.started });
-    announce(`${item.title} ${item.started ? "시작을 취소했어요." : "시작했어요."}`);
+    showToast(`${item.title} ${item.started ? "시작을 취소했어요." : "시작했어요."}`);
+    render();
+    return;
   }
 
   if (action === "edit-rail") {
     state.editingRailId = state.editingRailId === id ? null : id;
+    state.addPanelOpen = false;
+    render();
+    return;
   }
 
   if (action === "cancel-edit") {
     state.editingRailId = null;
+    render();
+    return;
   }
 
-  if (action === "change-tab") {
-    state.activeTab = id;
-    announce(`${button.textContent} 탭을 눌렀어요.`);
+  if (action === "go-home") {
+    state.activeTab = "home";
+    render();
+    scrollToSection("homeSection");
+    return;
   }
 
-  if (action === "add-record") {
-    addQuickRecord();
+  if (action === "go-records") {
+    state.activeTab = "records";
+    render();
+    scrollToSection("recordsSection");
+    return;
   }
 
-  render();
+  if (action === "open-add-panel") {
+    openAddPanel();
+    render();
+    window.requestAnimationFrame(() => {
+      document.querySelector(".add-panel input")?.focus();
+    });
+    return;
+  }
+
+  if (action === "close-add-panel") {
+    closeAddPanel();
+    render();
+    return;
+  }
+
+  if (action === "set-panel-mode") {
+    state.addPanelMode = id;
+    render();
+    window.requestAnimationFrame(() => {
+      document.querySelector(".add-panel input")?.focus();
+    });
+    return;
+  }
+
+  if (action === "show-stamps") {
+    showToast("스탬프 화면은 준비 중이에요.");
+    render();
+    return;
+  }
+
+  if (action === "show-my-flow") {
+    showToast("나의 흐름 화면은 준비 중이에요.");
+    render();
+  }
 });
 
 app.addEventListener("submit", (event) => {
-  const form = event.target.closest("form[data-action='save-rail']");
+  const form = event.target.closest("form[data-action]");
 
   if (!form) {
     return;
@@ -394,31 +685,36 @@ app.addEventListener("submit", (event) => {
 
   event.preventDefault();
 
-  const formData = new FormData(form);
-  const nextItem = {
-    time: String(formData.get("time") || "").trim() || "시간",
-    title: String(formData.get("title") || "").trim() || "새 항목",
-    note: String(formData.get("note") || "").trim() || "가볍게"
-  };
+  if (form.dataset.action === "save-rail") {
+    const formData = new FormData(form);
+    const nextItem = {
+      time: String(formData.get("time") || "").trim() || "시간",
+      title: String(formData.get("title") || "").trim() || "새 항목",
+      note: String(formData.get("note") || "").trim() || "가볍게"
+    };
 
-  updateRailItem(form.dataset.id, nextItem);
-  state.editingRailId = null;
-  announce("레일이 수정되어 포스트잇에도 반영됐어요.");
-  render();
+    updateRailItem(form.dataset.id, nextItem);
+    state.editingRailId = null;
+    showToast("레일 수정이 포스트잇에도 반영됐어요.");
+    render();
+    return;
+  }
+
+  if (form.dataset.action === "save-record") {
+    saveRecord(form);
+    return;
+  }
+
+  if (form.dataset.action === "save-new-rail") {
+    saveNewRail(form);
+  }
 });
 
-function addQuickRecord() {
-  const nextRecord = {
-    id: `record-${Date.now()}`,
-    icon: "✦",
-    text: "작은 일 하나 해냄",
-    category: "record",
-    stamped: true
-  };
-
-  state.records = [nextRecord, ...state.records];
-  state.activeTab = "records";
-  announce("오늘 기록을 하나 추가했어요.");
-}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && state.addPanelOpen) {
+    closeAddPanel();
+    render();
+  }
+});
 
 render();
