@@ -430,7 +430,7 @@ function renderRailActions(item) {
     startButton.textContent = "";
     startButton.append(
       createElement("span", "rail-paused-time", formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item))),
-      createElement("span", "rail-paused-icon", "⏸")
+      createElement("span", "rail-paused-icon")
     );
   }
 
