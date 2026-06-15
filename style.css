@@ -128,7 +128,7 @@ button {
 .post-it:nth-child(2) {
   --tilt: 1.4deg;
   --pin: #829e70;
-  top: 204px;
+  top: 212px;
   right: 86px;
   background: #dce0bd;
 }
@@ -231,9 +231,9 @@ h1 {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 0 6px;
+  gap: 5px;
+  min-height: 43px;
+  padding: 0 8px;
   border: 1px solid rgba(126, 91, 62, 0.12);
   border-radius: 999px;
   background: rgba(255, 253, 249, 0.86);
@@ -243,15 +243,15 @@ h1 {
 }
 
 .date-arrow-button {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #a07057;
-  font-size: 1.35rem;
+  font-size: 1.42rem;
   font-weight: 900;
   line-height: 1;
   cursor: pointer;
@@ -270,17 +270,17 @@ h1 {
 }
 
 .date-label {
-  min-width: 62px;
+  min-width: 66px;
   padding: 0 2px;
   color: #7b6655;
-  font-size: 0.84rem;
+  font-size: 0.89rem;
   font-weight: 850;
   text-align: center;
 }
 
 .date-icon {
-  width: 21px;
-  height: 21px;
+  width: 23px;
+  height: 23px;
   object-fit: contain;
 }
 
@@ -328,8 +328,8 @@ h1 {
   grid-template-columns: 54px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  min-height: 72px;
-  padding: 12px 0;
+  min-height: 66px;
+  padding: 9px 0;
   border-bottom: 1px solid rgba(120, 89, 61, 0.1);
 }
 
@@ -348,7 +348,7 @@ h1 {
 .rail-main {
   min-width: 0;
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .rail-title {
@@ -413,8 +413,10 @@ h1 {
   position: relative;
   min-width: 88px;
   overflow: hidden;
-  background: rgba(122, 96, 72, 0.1);
+  border: 1px solid rgba(122, 96, 72, 0.08);
+  background: rgba(255, 253, 249, 0.38);
   color: #6a5142;
+  box-shadow: none;
 }
 
 .rail-paused-time {
@@ -545,8 +547,8 @@ h1 {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
-  min-height: 78px;
-  padding: 10px 0;
+  min-height: 72px;
+  padding: 7px 0;
   border-bottom: 1px solid rgba(120, 89, 61, 0.1);
   transition: background-color 0.14s ease;
   overflow: visible;
@@ -558,7 +560,7 @@ h1 {
 
 .record-display {
   min-width: 0;
-  min-height: 54px;
+  min-height: 50px;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 12px;
@@ -590,7 +592,7 @@ h1 {
   overflow: hidden;
   font-size: 1rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.28;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1177,7 +1179,7 @@ h1 {
   }
 
   .post-it:nth-child(2) {
-    top: 198px;
+    top: 206px;
     right: 70px;
   }
 
@@ -1229,26 +1231,26 @@ h1 {
   .date-pill {
     justify-self: end;
     align-self: end;
-    min-height: 34px;
-    gap: 2px;
-    margin-right: 18px;
-    padding: 0 3px;
+    min-height: 38px;
+    gap: 3px;
+    margin-right: 14px;
+    padding: 0 5px;
   }
 
   .date-arrow-button {
-    width: 19px;
-    height: 19px;
-    font-size: 0.98rem;
+    width: 22px;
+    height: 22px;
+    font-size: 1.08rem;
   }
 
   .date-label {
-    min-width: 44px;
-    font-size: 0.68rem;
+    min-width: 50px;
+    font-size: 0.75rem;
   }
 
   .date-icon {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   .section-stack {
@@ -1263,6 +1265,8 @@ h1 {
   .rail-item {
     grid-template-columns: 44px minmax(0, 1fr) auto;
     gap: 9px;
+    min-height: 62px;
+    padding: 8px 0;
   }
 
   .rail-time {
@@ -1310,7 +1314,8 @@ h1 {
   .record-item {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
-    min-height: 78px;
+    min-height: 70px;
+    padding: 6px 0;
   }
 
   .record-display {
