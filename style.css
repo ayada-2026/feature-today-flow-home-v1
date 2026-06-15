@@ -120,24 +120,24 @@ button {
 .post-it:nth-child(1) {
   --tilt: 1deg;
   --pin: #d9785d;
-  top: 112px;
-  right: 92px;
+  top: 108px;
+  right: 102px;
   background: #f7cbbb;
 }
 
 .post-it:nth-child(2) {
   --tilt: 1.4deg;
   --pin: #829e70;
-  top: 184px;
-  right: 76px;
+  top: 176px;
+  right: 112px;
   background: #dce0bd;
 }
 
 .post-it:nth-child(3) {
   --tilt: -1.2deg;
   --pin: #769198;
-  top: 210px;
-  left: 108px;
+  top: 196px;
+  left: 66px;
   background: #d9e3df;
 }
 
@@ -176,7 +176,7 @@ button {
   max-width: 386px;
   align-items: start;
   justify-content: start;
-  gap: 0;
+  gap: 10px;
 }
 
 .hero-title-block {
@@ -205,29 +205,16 @@ h1 {
 }
 
 .subtitle {
-  max-width: 100%;
-  display: grid;
-  gap: 4px;
+  max-width: 250px;
   margin-top: 8px;
   color: #7a6656;
   font-size: 0.95rem;
   line-height: 1.42;
-}
-
-.subtitle-line,
-.subtitle-inline-row {
-  min-width: 0;
-}
-
-.subtitle-inline-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  white-space: pre-line;
 }
 
 .date-pill {
-  justify-self: start;
+  justify-self: end;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -410,8 +397,40 @@ h1 {
 }
 
 .rail-timer-button.is-paused {
+  position: relative;
+  min-width: 92px;
+  overflow: hidden;
   background: rgba(122, 96, 72, 0.12);
-  color: #897260;
+  color: #6a5142;
+}
+
+.rail-paused-time {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(88, 67, 53, 0.34);
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+.rail-paused-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-inline: auto;
+  border-radius: 10px;
+  background: rgba(255, 253, 249, 0.72);
+  color: #4a3b31;
+  font-size: 1.22rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 12px rgba(92, 66, 38, 0.13);
 }
 
 .icon-button {
@@ -1138,19 +1157,19 @@ h1 {
   }
 
   .post-it:nth-child(1) {
-    top: 104px;
+    top: 102px;
     left: auto;
-    right: 78px;
+    right: 92px;
   }
 
   .post-it:nth-child(2) {
-    top: 166px;
-    right: 42px;
+    top: 164px;
+    right: 106px;
   }
 
   .post-it:nth-child(3) {
-    top: 194px;
-    left: 72px;
+    top: 190px;
+    left: 54px;
   }
 
   .post-title {
@@ -1163,7 +1182,7 @@ h1 {
 
   .hero-copy {
     left: 24px;
-    right: 54px;
+    right: 38px;
     bottom: 18px;
   }
 
@@ -1185,18 +1204,14 @@ h1 {
   }
 
   .subtitle {
+    max-width: 230px;
     margin-top: 7px;
     font-size: 0.8rem;
     line-height: 1.36;
-    gap: 3px;
-  }
-
-  .subtitle-inline-row {
-    gap: 6px;
   }
 
   .date-pill {
-    justify-self: start;
+    justify-self: end;
     min-height: 34px;
     padding: 0 4px;
   }
@@ -1256,6 +1271,21 @@ h1 {
   .rail-timer-button {
     min-width: 62px;
     padding: 0 10px;
+  }
+
+  .rail-timer-button.is-paused {
+    min-width: 82px;
+    padding: 0 8px;
+  }
+
+  .rail-paused-time {
+    font-size: 0.94rem;
+  }
+
+  .rail-paused-icon {
+    width: 29px;
+    height: 29px;
+    font-size: 1.08rem;
   }
 
   .icon-button {

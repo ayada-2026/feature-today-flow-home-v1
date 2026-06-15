@@ -324,8 +324,7 @@ function renderHero() {
   const eyebrow = createElement("p", "eyebrow", "TODAY FLOW");
   const title = createElement("h1", null, "오늘의 흐름");
   title.id = "pageTitle";
-  const subtitle = createElement("div", "subtitle");
-  subtitle.append(createElement("span", "subtitle-line", "시작할 시간은 가볍게 정하고,"));
+  const subtitle = createElement("p", "subtitle", "시작할 시간은 가볍게 정하고,\n해낸 일은 도장으로 남겨요.");
 
   const datePill = createElement("div", "date-pill");
   datePill.setAttribute("aria-label", "날짜 이동");
@@ -340,12 +339,8 @@ function renderHero() {
     nextDateButton
   );
 
-  const subtitleInlineRow = createElement("span", "subtitle-inline-row");
-  subtitleInlineRow.append(createElement("span", null, "해낸 일은 도장으로 남겨요."), datePill);
-  subtitle.append(subtitleInlineRow);
-
   titleBlock.append(eyebrow, title, subtitle);
-  titleRow.append(titleBlock);
+  titleRow.append(titleBlock, datePill);
   copy.append(titleRow);
   hero.append(copy);
 
@@ -430,6 +425,11 @@ function renderRailActions(item) {
 
   if (timerStatus === "paused") {
     startButton.classList.add("is-paused");
+    startButton.textContent = "";
+    startButton.append(
+      createElement("span", "rail-paused-time", formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item))),
+      createElement("span", "rail-paused-icon", "⏸")
+    );
   }
 
   if (timerStatus === "done") {
@@ -624,7 +624,7 @@ function getRailButtonLabel(item) {
   }
 
   if (timerStatus === "paused") {
-    return `⏸ ${remaining}`;
+    return remaining;
   }
 
   if (timerStatus === "done") {
