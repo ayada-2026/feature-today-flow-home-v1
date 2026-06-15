@@ -394,6 +394,7 @@ function renderCardShell(icon, title) {
 
 function renderRailItem(item) {
   const listItem = createElement("li", "rail-item");
+  listItem.dataset.railId = item.id;
 
   listItem.append(
     createElement("span", "rail-time", item.time),
@@ -416,6 +417,7 @@ function renderRailMain(item) {
 
 function renderRailActions(item) {
   const actions = createElement("div", "rail-actions");
+  actions.dataset.railActionsFor = item.id;
   const timerStatus = item.timerStatus || "idle";
   const startButton = createButton("pill-button rail-timer-button", getRailButtonLabel(item), getRailButtonAction(item), item.id);
 
@@ -530,6 +532,7 @@ function renderRecordIcon(text) {
 
 function renderStampButton(record) {
   const stamp = createButton("stamp-badge stamp-button", "", "stamp-record", record.id);
+  stamp.dataset.stampFor = record.id;
   const isStamping = state.stampingRecordId === record.id && state.stampingRecordDateKey === state.selectedDateKey;
 
   if (record.stamped) {
@@ -960,6 +963,59 @@ function renderToast() {
   return toast;
 }
 
+function getRailItemById(id) {
+  return state.railItems.find((railItem) => railItem.id === id);
+}
+
+function findElementByData(root, dataName, value) {
+  const attributeName = dataName.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+
+  return [...root.querySelectorAll(`[data-${attributeName}]`)]
+    .find((element) => element.dataset[dataName] === value);
+}
+
+function refreshRailActions(id) {
+  const item = getRailItemById(id);
+
+  if (!item) {
+    return false;
+  }
+
+  const railItem = findElementByData(app, "railId", id);
+  const currentActions = railItem?.querySelector(".rail-actions");
+
+  if (!currentActions) {
+    return false;
+  }
+
+  currentActions.replaceWith(renderRailActions(item));
+  return true;
+}
+
+function refreshRecordStamp(id, dateKey = state.selectedDateKey) {
+  if (dateKey !== state.selectedDateKey) {
+    return false;
+  }
+
+  const record = getSelectedRecords().find((item) => item.id === id);
+  const currentStamp = findElementByData(app, "stampFor", id);
+
+  if (!record || !currentStamp) {
+    return false;
+  }
+
+  currentStamp.replaceWith(renderStampButton(record));
+  return true;
+}
+
+function refreshToast() {
+  app.querySelector(".toast")?.remove();
+
+  if (state.toastMessage) {
+    app.append(renderToast());
+  }
+}
+
 function updateRailItem(id, nextValues) {
   state.railItems = state.railItems.map((item) => (
     item.id === id ? { ...item, ...nextValues } : item
@@ -991,8 +1047,10 @@ function showToast(message) {
 
   toastTimer = setTimeout(() => {
     state.toastMessage = "";
-    render();
+    refreshToast();
   }, 1800);
+
+  refreshToast();
 }
 
 function scrollToSection(sectionId) {
@@ -1140,7 +1198,9 @@ function startRailTimer(id) {
     durationSeconds,
     remainingSeconds: durationSeconds
   });
-  render();
+  if (!refreshRailActions(id)) {
+    render();
+  }
   runRailTimer(id);
 }
 
@@ -1157,7 +1217,9 @@ function pauseRailTimer(id) {
   updateRailItem(id, {
     timerStatus: "paused"
   });
-  render();
+  if (!refreshRailActions(id)) {
+    render();
+  }
 }
 
 function resumeRailTimer(id) {
@@ -1170,7 +1232,9 @@ function resumeRailTimer(id) {
   updateRailItem(id, {
     timerStatus: "running"
   });
-  render();
+  if (!refreshRailActions(id)) {
+    render();
+  }
   runRailTimer(id);
 }
 
@@ -1191,14 +1255,18 @@ function tickRailTimer(id) {
       timerStatus: "done"
     });
     showToast(`${item.title} 기록할 준비가 됐어요.`);
-    render();
+    if (!refreshRailActions(id)) {
+      render();
+    }
     return;
   }
 
   updateRailItem(id, {
     remainingSeconds: nextRemaining
   });
-  render();
+  if (!refreshRailActions(id)) {
+    render();
+  }
 }
 
 function recordRailResult(id) {
@@ -1258,7 +1326,9 @@ function stampRecord(id) {
   const stampDateKey = state.selectedDateKey;
   state.stampingRecordId = id;
   state.stampingRecordDateKey = stampDateKey;
-  render();
+  if (!refreshRecordStamp(id, stampDateKey)) {
+    render();
+  }
 
   setTimeout(() => {
     const records = state.recordsByDate[stampDateKey] || [];
@@ -1271,7 +1341,9 @@ function stampRecord(id) {
     state.stampingRecordId = null;
     state.stampingRecordDateKey = null;
     saveRecordsByDate();
-    render();
+    if (!refreshRecordStamp(id, stampDateKey)) {
+      render();
+    }
   }, 640);
 }
 
