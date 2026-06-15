@@ -92,9 +92,9 @@ button {
   position: absolute;
   display: grid;
   gap: 3px;
-  width: 112px;
-  min-height: 92px;
-  padding: 18px 14px 13px;
+  width: 96px;
+  min-height: 82px;
+  padding: 16px 12px 11px;
   border-radius: 12px;
   color: #4a3b31;
   text-align: center;
@@ -105,10 +105,10 @@ button {
 .post-it::before {
   content: "";
   position: absolute;
-  top: -9px;
+  top: -7px;
   left: 50%;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
   background: var(--pin);
   box-shadow:
@@ -118,37 +118,37 @@ button {
 }
 
 .post-it:nth-child(1) {
-  --tilt: -2.5deg;
+  --tilt: -1.5deg;
   --pin: #d9785d;
-  top: 118px;
-  left: 115px;
+  top: 122px;
+  left: 108px;
   background: #f7cbbb;
 }
 
 .post-it:nth-child(2) {
-  --tilt: 2deg;
+  --tilt: 1.2deg;
   --pin: #829e70;
-  top: 164px;
+  top: 154px;
   right: 72px;
   background: #dce0bd;
 }
 
 .post-it:nth-child(3) {
-  --tilt: -1.5deg;
+  --tilt: -0.8deg;
   --pin: #769198;
-  top: 198px;
-  left: 150px;
+  top: 174px;
+  left: 198px;
   background: #d9e3df;
 }
 
 .post-time {
   color: #6a5142;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 800;
 }
 
 .post-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   line-height: 1.35;
   word-break: keep-all;
@@ -156,31 +156,33 @@ button {
 
 .post-note {
   color: #705f51;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   line-height: 1.32;
   word-break: keep-all;
 }
 
 .hero-copy {
   position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 30px;
+  left: 32px;
+  right: 32px;
+  bottom: 28px;
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .hero-title-row {
   display: grid;
+  width: max-content;
+  max-width: min(100%, 330px);
   align-items: start;
-  justify-content: space-between;
+  justify-content: start;
   gap: 12px;
 }
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 7px;
   color: #b1634b;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
@@ -193,21 +195,21 @@ p {
 }
 
 h1 {
-  font-size: clamp(2.3rem, 11vw, 3.15rem);
-  line-height: 0.98;
+  font-size: clamp(2.12rem, 9.7vw, 2.82rem);
+  line-height: 1.02;
   letter-spacing: 0;
 }
 
 .subtitle {
-  max-width: 300px;
-  margin-top: 9px;
+  max-width: 282px;
+  margin-top: 10px;
   color: #7a6656;
-  font-size: 1rem;
-  line-height: 1.58;
+  font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .date-pill {
-  justify-self: end;
+  justify-self: start;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -258,6 +260,12 @@ h1 {
   text-align: center;
 }
 
+.date-icon {
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+}
+
 .section-stack {
   display: grid;
   gap: 18px;
@@ -281,12 +289,9 @@ h1 {
 }
 
 .section-icon {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  color: #6e543f;
-  font-size: 1.2rem;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
 }
 
 .section-header h2 {
@@ -487,12 +492,13 @@ h1 {
 .record-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  min-height: 68px;
+  min-height: 78px;
   padding: 10px 0;
   border-bottom: 1px solid rgba(120, 89, 61, 0.1);
   transition: background-color 0.14s ease;
+  overflow: visible;
 }
 
 .record-item:hover {
@@ -501,9 +507,9 @@ h1 {
 
 .record-display {
   min-width: 0;
-  min-height: 48px;
+  min-height: 54px;
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   border-radius: 14px;
@@ -512,14 +518,20 @@ h1 {
   text-align: left;
 }
 
-.record-emoji {
-  width: 36px;
-  height: 36px;
+.record-icon-wrap {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
   display: grid;
   place-items: center;
   border-radius: 12px;
   background: rgba(242, 218, 191, 0.64);
-  font-size: 1.3rem;
+}
+
+.record-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .record-text {
@@ -533,25 +545,54 @@ h1 {
 }
 
 .stamp-badge {
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
+  width: 66px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 2px solid #d6674c;
   border-radius: 999px;
   color: #d6674c;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 900;
   line-height: 1.12;
   text-align: center;
   transform: rotate(-8deg);
   background: rgba(255, 249, 242, 0.72);
+  overflow: visible;
 }
 
 .stamp-button {
   padding: 0;
   cursor: pointer;
   transition: transform 0.16s ease, opacity 0.16s ease, background-color 0.16s ease;
+}
+
+.stamp-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.stamp-action-image {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  transform-origin: 50% 85%;
+  animation: stamp-press 640ms cubic-bezier(0.2, 0.72, 0.24, 1) both;
+}
+
+.stamp-result-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.stamp-label {
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stamp-button.is-empty {
@@ -563,24 +604,66 @@ h1 {
 }
 
 .stamp-button.is-stamped {
+  border-color: transparent;
+  background: transparent;
   opacity: 1;
 }
 
-.stamp-button.is-stamping {
-  animation: stamp-pop 240ms ease-out;
+.stamp-button.is-stamped .stamp-result-image {
+  animation: stamp-result-pop 220ms ease-out both;
 }
 
-@keyframes stamp-pop {
+.stamp-button.is-stamping {
+  border-color: transparent;
+  background: transparent;
+  opacity: 1;
+  pointer-events: none;
+}
+
+@keyframes stamp-press {
   0% {
-    transform: rotate(-5deg) scale(1);
+    opacity: 0;
+    transform: translateY(-12px) rotate(-10deg) scale(0.78);
   }
 
-  48% {
-    transform: rotate(-8deg) scale(1.18);
+  25% {
+    opacity: 1;
+    transform: translateY(-10px) rotate(-8deg) scale(1.12);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translateY(5px) rotate(-5deg) scale(0.82);
+  }
+
+  78% {
+    opacity: 0.96;
+    transform: translateY(1px) rotate(-6deg) scale(0.92);
   }
 
   100% {
+    opacity: 0;
+    transform: translateY(4px) rotate(-6deg) scale(0.88);
+  }
+}
+
+@keyframes stamp-result-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(-7deg) scale(0.78);
+    filter: saturate(0.85);
+  }
+
+  62% {
+    opacity: 1;
+    transform: rotate(-8deg) scale(1.08);
+    filter: saturate(1.12);
+  }
+
+  100% {
+    opacity: 1;
     transform: rotate(-8deg) scale(1);
+    filter: saturate(1);
   }
 }
 
@@ -612,8 +695,9 @@ h1 {
 }
 
 .summary-icon {
-  color: var(--gold);
-  font-size: 1.45rem;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .summary-label {
@@ -624,9 +708,9 @@ h1 {
 
 .summary-value {
   color: #4c382c;
-  font-size: 1.58rem;
-  font-weight: 900;
-  line-height: 1;
+  font-size: 1.34rem;
+  font-weight: 850;
+  line-height: 1.05;
 }
 
 .tab-bar {
@@ -667,8 +751,16 @@ h1 {
 }
 
 .tab-icon {
-  font-size: 1.34rem;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 1.46rem;
   line-height: 1;
+}
+
+.tab-image-icon {
+  object-fit: contain;
 }
 
 .tab-button.is-active {
@@ -886,7 +978,7 @@ h1 {
 .record-manage-main {
   min-width: 0;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
 }
@@ -941,7 +1033,7 @@ h1 {
 .record-delete-target {
   min-width: 0;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -1022,47 +1114,65 @@ h1 {
   }
 
   .post-it {
-    width: 100px;
-    min-height: 84px;
-    padding: 16px 11px 11px;
+    width: 90px;
+    min-height: 76px;
+    padding: 14px 10px 10px;
   }
 
   .post-it:nth-child(1) {
-    top: 110px;
-    left: 82px;
+    top: 120px;
+    left: 84px;
   }
 
   .post-it:nth-child(2) {
-    top: 160px;
-    right: 54px;
+    top: 154px;
+    right: 42px;
   }
 
   .post-it:nth-child(3) {
-    top: 204px;
-    left: 86px;
+    top: 180px;
+    left: 174px;
   }
 
   .post-title {
-    font-size: 0.86rem;
+    font-size: 0.79rem;
   }
 
   .post-note {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
   }
 
   .hero-copy {
-    left: 19px;
-    right: 19px;
+    left: 25px;
+    right: 25px;
+    bottom: 26px;
   }
 
   .hero-title-row {
     display: grid;
     align-items: flex-start;
-    gap: 10px;
+    gap: 11px;
+    max-width: min(100%, 304px);
+  }
+
+  .eyebrow {
+    margin-bottom: 6px;
+    font-size: 0.7rem;
+  }
+
+  h1 {
+    font-size: clamp(2.05rem, 10.6vw, 2.58rem);
+  }
+
+  .subtitle {
+    max-width: 270px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    line-height: 1.52;
   }
 
   .date-pill {
-    justify-self: end;
+    justify-self: start;
     min-height: 40px;
     padding: 0 6px;
   }
@@ -1076,6 +1186,11 @@ h1 {
   .date-label {
     min-width: 104px;
     font-size: 0.82rem;
+  }
+
+  .date-icon {
+    width: 18px;
+    height: 18px;
   }
 
   .section-stack {
@@ -1121,12 +1236,24 @@ h1 {
 
   .record-item {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 9px;
+    gap: 10px;
+    min-height: 78px;
   }
 
   .record-display {
-    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-columns: 42px minmax(0, 1fr);
     gap: 9px;
+  }
+
+  .record-icon-wrap {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .record-icon {
+    width: 100%;
+    height: 100%;
   }
 
   .record-manage-item {
@@ -1147,9 +1274,28 @@ h1 {
   }
 
   .stamp-badge {
+    width: 60px;
+    height: 60px;
+    font-size: 0.5rem;
+  }
+
+  .stamp-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stamp-action-image {
     width: 50px;
     height: 50px;
-    font-size: 0.62rem;
+  }
+
+  .stamp-result-image {
+    width: 58px;
+    height: 58px;
+  }
+
+  .stamp-label {
+    max-width: 48px;
   }
 
   .add-panel-overlay {
@@ -1187,15 +1333,15 @@ h1 {
 
 @media (max-width: 360px) {
   .post-it:nth-child(1) {
-    left: 58px;
+    left: 68px;
   }
 
   .post-it:nth-child(2) {
-    right: 30px;
+    right: 22px;
   }
 
   .post-it:nth-child(3) {
-    left: 76px;
+    left: 146px;
   }
 
   .date-pill {

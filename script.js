@@ -6,6 +6,34 @@ const STORAGE_KEYS = {
   recordsByDate: "todayFlowRecordsByDate"
 };
 
+const ICONS = {
+  train: "assets/icons/train.png",
+  note: "assets/icons/note.png",
+  calendar: "assets/icons/calendar.png",
+  stamp: "assets/icons/stamp.png",
+  stampResult: "assets/icons/stamp1.png",
+  water: "assets/icons/water.png",
+  rice: "assets/icons/rice.png",
+  housework: "assets/icons/housework.png",
+  work: "assets/icons/work.png",
+  exercise: "assets/icons/exercise.png",
+  hygiene: "assets/icons/hygiene.png",
+  rest: "assets/icons/rest.png",
+  hobby: "assets/icons/hobby.png",
+  misc: "assets/icons/misc.png"
+};
+
+const RECORD_ICON_RULES = [
+  { icon: ICONS.water, keywords: ["물", "마심", "차", "음료"] },
+  { icon: ICONS.rice, keywords: ["밥", "식사", "과일", "간식", "먹음"] },
+  { icon: ICONS.housework, keywords: ["설거지", "청소", "빨래", "정리", "집안일"] },
+  { icon: ICONS.work, keywords: ["프리미어프로", "작업", "공부", "편집", "코덱스", "컴퓨터"] },
+  { icon: ICONS.exercise, keywords: ["스트레칭", "운동", "걷기", "산책"] },
+  { icon: ICONS.hygiene, keywords: ["세수", "샤워", "양치", "씻"] },
+  { icon: ICONS.rest, keywords: ["쉬기", "휴식", "낮잠", "멍", "잠"] },
+  { icon: ICONS.hobby, keywords: ["우쿨렐레", "책", "독서", "영화", "드라마", "취미"] }
+];
+
 const DEFAULT_RAIL_ITEMS = [
   {
     id: "rail-premiere",
@@ -88,6 +116,15 @@ function createButton(className, text, action, id) {
   return button;
 }
 
+function createIconImage(src, className, alt = "") {
+  const image = createElement("img", className);
+  image.src = src;
+  image.alt = alt;
+  image.loading = "lazy";
+  image.decoding = "async";
+  return image;
+}
+
 function createId(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
@@ -141,29 +178,29 @@ function defaultRecordsForToday() {
   return [
     {
       id: "record-premiere",
-      icon: "🎬",
       text: "프리미어프로 20분 함",
+      icon: getRecordIcon("프리미어프로 20분 함"),
       category: "record",
       stamped: false
     },
     {
       id: "record-dishes",
-      icon: "🍽",
       text: "설거지 15분 함",
+      icon: getRecordIcon("설거지 15분 함"),
       category: "chore",
       stamped: false
     },
     {
       id: "record-water",
-      icon: "🥛",
       text: "물 한 컵 마심",
+      icon: getRecordIcon("물 한 컵 마심"),
       category: "care",
       stamped: false
     },
     {
       id: "record-wash",
-      icon: "🫧",
       text: "세수함",
+      icon: getRecordIcon("세수함"),
       category: "care",
       stamped: false
     }
@@ -291,6 +328,7 @@ function renderHero() {
   nextDateButton.setAttribute("aria-label", "다음날로 이동");
   datePill.append(
     previousDateButton,
+    createIconImage(ICONS.calendar, "date-icon"),
     createElement("span", "date-label", formatDateLabel(state.selectedDateKey)),
     nextDateButton
   );
@@ -327,7 +365,7 @@ function renderSectionStack() {
 }
 
 function renderTodayRail() {
-  const section = renderCardShell("🚂", "오늘의 레일");
+  const section = renderCardShell(ICONS.train, "오늘의 레일");
   section.id = "railSection";
   const list = createElement("ul", "rail-list");
 
@@ -342,7 +380,7 @@ function renderTodayRail() {
 function renderCardShell(icon, title) {
   const section = createElement("section", "section-card");
   const header = createElement("header", "section-header");
-  header.append(createElement("span", "section-icon", icon), createElement("h2", null, title));
+  header.append(createIconImage(icon, "section-icon"), createElement("h2", null, title));
   section.append(header);
   return section;
 }
@@ -445,7 +483,7 @@ function renderInputRow(labelText, name, value, maxLength, placeholder = "") {
 }
 
 function renderTodayRecords() {
-  const section = renderCardShell("📝", "오늘 기록");
+  const section = renderCardShell(ICONS.note, "오늘 기록");
   section.id = "recordsSection";
   const list = createElement("ul", "record-list");
   const records = getSelectedRecords();
@@ -460,7 +498,7 @@ function renderTodayRecords() {
     const item = createElement("li", "record-item");
     const display = createElement("div", "record-display");
     display.append(
-      createElement("span", "record-emoji", record.icon),
+      renderRecordIcon(record.text),
       createElement("span", "record-text", record.text)
     );
 
@@ -472,18 +510,32 @@ function renderTodayRecords() {
   return section;
 }
 
+function renderRecordIcon(text) {
+  const wrap = createElement("span", "record-icon-wrap");
+  wrap.append(createIconImage(getRecordIcon(text), "record-icon"));
+  return wrap;
+}
+
 function renderStampButton(record) {
-  const stamp = createButton("stamp-badge stamp-button", record.stamped ? "참 잘했어요" : "도장 찍기", "stamp-record", record.id);
+  const stamp = createButton("stamp-badge stamp-button", "", "stamp-record", record.id);
+  const isStamping = state.stampingRecordId === record.id && state.stampingRecordDateKey === state.selectedDateKey;
+
+  if (record.stamped) {
+    stamp.append(createIconImage(ICONS.stampResult, "stamp-result-image"));
+  } else if (isStamping) {
+    stamp.append(createIconImage(ICONS.stamp, "stamp-action-image"));
+  } else {
+    stamp.append(createElement("span", "stamp-label", "도장 찍기"));
+  }
   stamp.setAttribute("aria-label", `${record.text} 도장 찍기`);
 
   if (record.stamped) {
     stamp.classList.add("is-stamped");
+  } else if (isStamping) {
+    stamp.classList.add("is-stamping");
+    stamp.disabled = true;
   } else {
     stamp.classList.add("is-empty");
-  }
-
-  if (state.stampingRecordId === record.id && state.stampingRecordDateKey === state.selectedDateKey) {
-    stamp.classList.add("is-stamping");
   }
 
   return stamp;
@@ -496,17 +548,17 @@ function renderSummary() {
 
   const summaryItems = [
     {
-      icon: "📋",
+      icon: ICONS.note,
       label: "기록",
       value: records.length
     },
     {
-      icon: "🌱",
+      icon: ICONS.hygiene,
       label: "몸 돌봄",
       value: countRecordsByCategory("care")
     },
     {
-      icon: "🏠",
+      icon: ICONS.housework,
       label: "집안일",
       value: countRecordsByCategory("chore")
     }
@@ -515,7 +567,7 @@ function renderSummary() {
   summaryItems.forEach((item) => {
     const block = createElement("article", "summary-item");
     block.append(
-      createElement("span", "summary-icon", item.icon),
+      createIconImage(item.icon, "summary-icon"),
       createElement("span", "summary-label", item.label),
       createElement("strong", "summary-value", String(item.value))
     );
@@ -599,9 +651,9 @@ function renderTabBar() {
 
   const tabs = [
     { id: "home", icon: "⌂", label: "홈", action: "go-home" },
-    { id: "records", icon: "▤", label: "기록", action: "go-records" },
+    { id: "records", icon: ICONS.note, label: "기록", action: "go-records", image: true },
     { id: "add", icon: "+", label: "", action: "open-add-panel" },
-    { id: "stamps", icon: "♙", label: "스탬프", action: "show-stamps" },
+    { id: "stamps", icon: ICONS.stamp, label: "스탬프", action: "show-stamps", image: true },
     { id: "my-flow", icon: "♡", label: "나의 흐름", action: "show-my-flow" }
   ];
 
@@ -619,7 +671,10 @@ function renderTabBar() {
       button.classList.add("is-active");
     }
 
-    button.append(createElement("span", "tab-icon", tab.icon), createElement("span", null, tab.label));
+    const tabIcon = tab.image
+      ? createIconImage(tab.icon, "tab-icon tab-image-icon")
+      : createElement("span", "tab-icon", tab.icon);
+    button.append(tabIcon, createElement("span", null, tab.label));
     nav.append(button);
   });
 
@@ -839,7 +894,7 @@ function renderRecordDeleteConfirm() {
 
   const target = createElement("div", "record-delete-target");
   target.append(
-    createElement("span", "record-emoji", record.icon),
+    renderRecordIcon(record.text),
     createElement("span", "record-manage-text", record.text)
   );
   wrap.append(target);
@@ -868,7 +923,7 @@ function renderRecordManageList() {
     const item = createElement("article", "record-manage-item");
     const main = createElement("div", "record-manage-main");
     main.append(
-      createElement("span", "record-emoji", record.icon),
+      renderRecordIcon(record.text),
       createElement("span", "record-manage-text", record.text)
     );
 
@@ -987,12 +1042,11 @@ function updateAddPanelDraft(input) {
 }
 
 function getRecordIcon(text) {
-  if (text.includes("물")) return "🥛";
-  if (text.includes("세수") || text.includes("씻")) return "🫧";
-  if (text.includes("설거지") || text.includes("집안")) return "🍽";
-  if (text.includes("스트레칭") || text.includes("운동")) return "🌱";
-  if (text.includes("프리미어") || text.includes("편집")) return "🎬";
-  return "✦";
+  const recordText = String(text || "");
+  const matchedRule = RECORD_ICON_RULES.find((rule) => (
+    rule.keywords.some((keyword) => recordText.includes(keyword))
+  ));
+  return matchedRule ? matchedRule.icon : ICONS.misc;
 }
 
 function getRecordCategory(text) {
@@ -1185,7 +1239,7 @@ function deleteRail(id) {
 function stampRecord(id) {
   const record = getSelectedRecords().find((item) => item.id === id);
 
-  if (!record || record.stamped) {
+  if (!record || record.stamped || state.stampingRecordId) {
     return;
   }
 
@@ -1206,7 +1260,7 @@ function stampRecord(id) {
     state.stampingRecordDateKey = null;
     saveRecordsByDate();
     render();
-  }, 240);
+  }, 640);
 }
 
 function openRecordSheet() {
