@@ -128,16 +128,16 @@ button {
 .post-it:nth-child(2) {
   --tilt: 1.4deg;
   --pin: #829e70;
-  top: 184px;
-  right: 136px;
+  top: 204px;
+  right: 86px;
   background: #dce0bd;
 }
 
 .post-it:nth-child(3) {
   --tilt: -1.2deg;
   --pin: #769198;
-  top: 196px;
-  left: 86px;
+  top: 216px;
+  left: 128px;
   background: #d9e3df;
 }
 
@@ -172,15 +172,26 @@ button {
 
 .hero-title-row {
   display: grid;
-  width: min(100%, 386px);
-  max-width: 386px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  width: min(100%, 430px);
+  max-width: 430px;
+  align-items: end;
   justify-content: start;
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 0;
 }
 
 .hero-title-block {
-  display: grid;
+  display: contents;
+}
+
+.hero-title-row .eyebrow,
+.hero-title-row h1 {
+  grid-column: 1 / -1;
+}
+
+.hero-title-row .subtitle {
+  grid-column: 1;
 }
 
 .eyebrow {
@@ -214,7 +225,9 @@ h1 {
 }
 
 .date-pill {
+  grid-column: 2;
   justify-self: end;
+  align-self: end;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -1164,13 +1177,13 @@ h1 {
   }
 
   .post-it:nth-child(2) {
-    top: 174px;
-    right: 122px;
+    top: 198px;
+    right: 70px;
   }
 
   .post-it:nth-child(3) {
-    top: 190px;
-    left: 72px;
+    top: 210px;
+    left: 112px;
   }
 
   .post-title {
@@ -1189,8 +1202,10 @@ h1 {
 
   .hero-title-row {
     display: grid;
-    align-items: flex-start;
-    gap: 0;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    align-items: end;
+    column-gap: 8px;
+    row-gap: 0;
     width: 100%;
     max-width: 100%;
   }
@@ -1213,29 +1228,27 @@ h1 {
 
   .date-pill {
     justify-self: end;
+    align-self: end;
     min-height: 34px;
-    padding: 0 4px;
+    gap: 2px;
+    margin-right: 18px;
+    padding: 0 3px;
   }
 
   .date-arrow-button {
-    width: 21px;
-    height: 21px;
+    width: 19px;
+    height: 19px;
     font-size: 0.98rem;
   }
 
   .date-label {
-    min-width: 48px;
-    font-size: 0.7rem;
+    min-width: 44px;
+    font-size: 0.68rem;
   }
 
   .date-icon {
-    width: 14px;
-    height: 14px;
-  }
-
-  .date-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   .section-stack {
@@ -1397,11 +1410,11 @@ h1 {
   }
 
   .post-it:nth-child(2) {
-    right: 78px;
+    right: 52px;
   }
 
   .post-it:nth-child(3) {
-    left: 66px;
+    left: 92px;
   }
 
   .date-pill {
