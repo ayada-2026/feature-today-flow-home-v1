@@ -120,16 +120,16 @@ button {
 .post-it:nth-child(1) {
   --tilt: 1deg;
   --pin: #d9785d;
-  top: 108px;
-  right: 102px;
+  top: 96px;
+  right: 92px;
   background: #f7cbbb;
 }
 
 .post-it:nth-child(2) {
   --tilt: 1.4deg;
   --pin: #829e70;
-  top: 176px;
-  right: 112px;
+  top: 184px;
+  right: 136px;
   background: #dce0bd;
 }
 
@@ -137,7 +137,7 @@ button {
   --tilt: -1.2deg;
   --pin: #769198;
   top: 196px;
-  left: 66px;
+  left: 86px;
   background: #d9e3df;
 }
 
@@ -398,9 +398,9 @@ h1 {
 
 .rail-timer-button.is-paused {
   position: relative;
-  min-width: 92px;
+  min-width: 88px;
   overflow: hidden;
-  background: rgba(122, 96, 72, 0.12);
+  background: rgba(122, 96, 72, 0.1);
   color: #6a5142;
 }
 
@@ -409,7 +409,7 @@ h1 {
   inset: 0;
   display: grid;
   place-items: center;
-  color: rgba(88, 67, 53, 0.34);
+  color: rgba(88, 67, 53, 0.24);
   font-size: 1.02rem;
   font-weight: 900;
   letter-spacing: 0;
@@ -421,16 +421,17 @@ h1 {
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: auto;
+  height: auto;
   margin-inline: auto;
-  border-radius: 10px;
-  background: rgba(255, 253, 249, 0.72);
-  color: #4a3b31;
-  font-size: 1.22rem;
+  border-radius: 0;
+  background: transparent;
+  color: #3f3127;
+  font-size: 1.28rem;
   font-weight: 900;
   line-height: 1;
-  box-shadow: 0 5px 12px rgba(92, 66, 38, 0.13);
+  text-shadow: 0 1px 0 rgba(255, 253, 249, 0.82);
+  box-shadow: none;
 }
 
 .icon-button {
@@ -1157,19 +1158,19 @@ h1 {
   }
 
   .post-it:nth-child(1) {
-    top: 102px;
+    top: 92px;
     left: auto;
-    right: 92px;
+    right: 82px;
   }
 
   .post-it:nth-child(2) {
-    top: 164px;
-    right: 106px;
+    top: 174px;
+    right: 122px;
   }
 
   .post-it:nth-child(3) {
     top: 190px;
-    left: 54px;
+    left: 72px;
   }
 
   .post-title {
@@ -1274,18 +1275,18 @@ h1 {
   }
 
   .rail-timer-button.is-paused {
-    min-width: 82px;
+    min-width: 78px;
     padding: 0 8px;
   }
 
   .rail-paused-time {
-    font-size: 0.94rem;
+    font-size: 0.9rem;
   }
 
   .rail-paused-icon {
-    width: 29px;
-    height: 29px;
-    font-size: 1.08rem;
+    width: auto;
+    height: auto;
+    font-size: 1.12rem;
   }
 
   .icon-button {
@@ -1396,11 +1397,11 @@ h1 {
   }
 
   .post-it:nth-child(2) {
-    right: 26px;
+    right: 78px;
   }
 
   .post-it:nth-child(3) {
-    left: 56px;
+    left: 66px;
   }
 
   .date-pill {
