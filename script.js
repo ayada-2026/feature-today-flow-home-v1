@@ -249,6 +249,14 @@ function formatDateLabel(dateKey) {
   }).format(dateFromKey(dateKey));
 }
 
+function formatCompactDateLabel(dateKey) {
+  const date = dateFromKey(dateKey);
+  const weekday = new Intl.DateTimeFormat("ko-KR", {
+    weekday: "short"
+  }).format(date);
+  return `${date.getMonth() + 1}.${date.getDate()} ${weekday}`;
+}
+
 function getSelectedRecords() {
   return state.recordsByDate[state.selectedDateKey] || [];
 }
@@ -311,14 +319,13 @@ function renderHero() {
 
   const copy = createElement("div", "hero-copy");
   const titleRow = createElement("div", "hero-title-row");
-  const titleBlock = createElement("div");
+  const titleBlock = createElement("div", "hero-title-block");
 
   const eyebrow = createElement("p", "eyebrow", "TODAY FLOW");
   const title = createElement("h1", null, "오늘의 흐름");
   title.id = "pageTitle";
-  const subtitle = createElement("p", "subtitle", "시작할 시간은 가볍게 정하고, 해낸 일은 도장으로 남겨보세요.");
-
-  titleBlock.append(eyebrow, title, subtitle);
+  const subtitle = createElement("div", "subtitle");
+  subtitle.append(createElement("span", "subtitle-line", "시작할 시간은 가볍게 정하고,"));
 
   const datePill = createElement("div", "date-pill");
   datePill.setAttribute("aria-label", "날짜 이동");
@@ -329,11 +336,16 @@ function renderHero() {
   datePill.append(
     previousDateButton,
     createIconImage(ICONS.calendar, "date-icon"),
-    createElement("span", "date-label", formatDateLabel(state.selectedDateKey)),
+    createElement("span", "date-label", formatCompactDateLabel(state.selectedDateKey)),
     nextDateButton
   );
 
-  titleRow.append(titleBlock, datePill);
+  const subtitleInlineRow = createElement("span", "subtitle-inline-row");
+  subtitleInlineRow.append(createElement("span", null, "해낸 일은 도장으로 남겨요."), datePill);
+  subtitle.append(subtitleInlineRow);
+
+  titleBlock.append(eyebrow, title, subtitle);
+  titleRow.append(titleBlock);
   copy.append(titleRow);
   hero.append(copy);
 

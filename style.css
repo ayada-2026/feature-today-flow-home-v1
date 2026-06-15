@@ -61,7 +61,7 @@ button {
 
 .hero {
   position: relative;
-  min-height: 520px;
+  min-height: 470px;
   padding: 24px 24px 34px;
   border-radius: 0 0 34px 34px;
   background-image:
@@ -92,9 +92,9 @@ button {
   position: absolute;
   display: grid;
   gap: 3px;
-  width: 96px;
-  min-height: 82px;
-  padding: 16px 12px 11px;
+  width: 88px;
+  min-height: 74px;
+  padding: 14px 10px 10px;
   border-radius: 12px;
   color: #4a3b31;
   text-align: center;
@@ -118,37 +118,37 @@ button {
 }
 
 .post-it:nth-child(1) {
-  --tilt: -1.5deg;
+  --tilt: 1deg;
   --pin: #d9785d;
-  top: 122px;
-  left: 108px;
+  top: 112px;
+  right: 92px;
   background: #f7cbbb;
 }
 
 .post-it:nth-child(2) {
-  --tilt: 1.2deg;
+  --tilt: 1.4deg;
   --pin: #829e70;
-  top: 154px;
-  right: 72px;
+  top: 184px;
+  right: 76px;
   background: #dce0bd;
 }
 
 .post-it:nth-child(3) {
-  --tilt: -0.8deg;
+  --tilt: -1.2deg;
   --pin: #769198;
-  top: 174px;
-  left: 198px;
+  top: 210px;
+  left: 108px;
   background: #d9e3df;
 }
 
 .post-time {
   color: #6a5142;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
 .post-title {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 800;
   line-height: 1.35;
   word-break: keep-all;
@@ -156,7 +156,7 @@ button {
 
 .post-note {
   color: #705f51;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   line-height: 1.32;
   word-break: keep-all;
 }
@@ -165,22 +165,26 @@ button {
   position: absolute;
   left: 32px;
   right: 32px;
-  bottom: 28px;
+  bottom: 20px;
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .hero-title-row {
   display: grid;
-  width: max-content;
-  max-width: min(100%, 330px);
+  width: min(100%, 386px);
+  max-width: 386px;
   align-items: start;
   justify-content: start;
-  gap: 12px;
+  gap: 0;
+}
+
+.hero-title-block {
+  display: grid;
 }
 
 .eyebrow {
-  margin: 0 0 7px;
+  margin: 0 0 5px;
   color: #b1634b;
   font-size: 0.74rem;
   font-weight: 900;
@@ -195,17 +199,31 @@ p {
 }
 
 h1 {
-  font-size: clamp(2.12rem, 9.7vw, 2.82rem);
+  font-size: clamp(1.98rem, 8.5vw, 2.56rem);
   line-height: 1.02;
   letter-spacing: 0;
 }
 
 .subtitle {
-  max-width: 282px;
-  margin-top: 10px;
+  max-width: 100%;
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
   color: #7a6656;
   font-size: 0.95rem;
-  line-height: 1.55;
+  line-height: 1.42;
+}
+
+.subtitle-line,
+.subtitle-inline-row {
+  min-width: 0;
+}
+
+.subtitle-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .date-pill {
@@ -214,8 +232,8 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 46px;
-  padding: 0 8px;
+  min-height: 40px;
+  padding: 0 6px;
   border: 1px solid rgba(126, 91, 62, 0.12);
   border-radius: 999px;
   background: rgba(255, 253, 249, 0.86);
@@ -225,8 +243,8 @@ h1 {
 }
 
 .date-arrow-button {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border: 0;
@@ -252,10 +270,10 @@ h1 {
 }
 
 .date-label {
-  min-width: 118px;
+  min-width: 62px;
   padding: 0 2px;
   color: #7b6655;
-  font-size: 0.94rem;
+  font-size: 0.84rem;
   font-weight: 850;
   text-align: center;
 }
@@ -1108,51 +1126,53 @@ h1 {
   }
 
   .hero {
-    min-height: 502px;
+    min-height: 440px;
     padding: 20px 19px 30px;
     border-radius: 0 0 30px 30px;
   }
 
   .post-it {
-    width: 90px;
-    min-height: 76px;
-    padding: 14px 10px 10px;
+    width: 80px;
+    min-height: 68px;
+    padding: 12px 9px 9px;
   }
 
   .post-it:nth-child(1) {
-    top: 120px;
-    left: 84px;
+    top: 104px;
+    left: auto;
+    right: 78px;
   }
 
   .post-it:nth-child(2) {
-    top: 154px;
+    top: 166px;
     right: 42px;
   }
 
   .post-it:nth-child(3) {
-    top: 180px;
-    left: 174px;
+    top: 194px;
+    left: 72px;
   }
 
   .post-title {
-    font-size: 0.79rem;
-  }
-
-  .post-note {
     font-size: 0.72rem;
   }
 
+  .post-note {
+    font-size: 0.66rem;
+  }
+
   .hero-copy {
-    left: 25px;
-    right: 25px;
-    bottom: 26px;
+    left: 24px;
+    right: 54px;
+    bottom: 18px;
   }
 
   .hero-title-row {
     display: grid;
     align-items: flex-start;
-    gap: 11px;
-    max-width: min(100%, 304px);
+    gap: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .eyebrow {
@@ -1161,31 +1181,40 @@ h1 {
   }
 
   h1 {
-    font-size: clamp(2.05rem, 10.6vw, 2.58rem);
+    font-size: clamp(1.86rem, 9vw, 2.28rem);
   }
 
   .subtitle {
-    max-width: 270px;
-    margin-top: 8px;
-    font-size: 0.9rem;
-    line-height: 1.52;
+    margin-top: 7px;
+    font-size: 0.8rem;
+    line-height: 1.36;
+    gap: 3px;
+  }
+
+  .subtitle-inline-row {
+    gap: 6px;
   }
 
   .date-pill {
     justify-self: start;
-    min-height: 40px;
-    padding: 0 6px;
+    min-height: 34px;
+    padding: 0 4px;
   }
 
   .date-arrow-button {
-    width: 29px;
-    height: 29px;
-    font-size: 1.18rem;
+    width: 21px;
+    height: 21px;
+    font-size: 0.98rem;
   }
 
   .date-label {
-    min-width: 104px;
-    font-size: 0.82rem;
+    min-width: 48px;
+    font-size: 0.7rem;
+  }
+
+  .date-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .date-icon {
@@ -1333,15 +1362,15 @@ h1 {
 
 @media (max-width: 360px) {
   .post-it:nth-child(1) {
-    left: 68px;
+    right: 62px;
   }
 
   .post-it:nth-child(2) {
-    right: 22px;
+    right: 26px;
   }
 
   .post-it:nth-child(3) {
-    left: 146px;
+    left: 56px;
   }
 
   .date-pill {
