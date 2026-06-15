@@ -593,7 +593,7 @@ function renderSummary() {
 }
 
 function countRecordsByCategory(category) {
-  return getSelectedRecords().filter((record) => record.category === category).length;
+  return getSelectedRecords().filter((record) => getRecordCategory(record.text) === category).length;
 }
 
 function getRailDurationSeconds(item) {
@@ -1120,11 +1120,19 @@ function getRecordIcon(text) {
 }
 
 function getRecordCategory(text) {
-  if (text.includes("물") || text.includes("세수") || text.includes("스트레칭") || text.includes("운동")) {
+  const recordText = String(text || "");
+
+  if (recordText.includes("물") || recordText.includes("세수") || recordText.includes("스트레칭") || recordText.includes("운동")) {
     return "care";
   }
 
-  if (text.includes("설거지") || text.includes("집안") || text.includes("정리")) {
+  if (
+    recordText.includes("설거지")
+    || recordText.includes("청소")
+    || recordText.includes("빨래")
+    || recordText.includes("정리")
+    || recordText.includes("집안")
+  ) {
     return "chore";
   }
 
