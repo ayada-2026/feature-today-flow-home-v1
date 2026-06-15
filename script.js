@@ -559,23 +559,23 @@ function renderStampButton(record) {
 function renderSummary() {
   const summary = createElement("section", "section-card summary-card");
   summary.setAttribute("aria-label", "오늘 요약");
-  const records = getSelectedRecords();
+  const stampedRecords = getSelectedRecords().filter((record) => record.stamped);
 
   const summaryItems = [
     {
       icon: ICONS.note,
       label: "기록",
-      value: records.length
+      value: stampedRecords.length
     },
     {
       icon: ICONS.hygiene,
       label: "몸 돌봄",
-      value: countRecordsByCategory("care")
+      value: countRecordsByCategory("care", stampedRecords)
     },
     {
       icon: ICONS.housework,
       label: "집안일",
-      value: countRecordsByCategory("chore")
+      value: countRecordsByCategory("chore", stampedRecords)
     }
   ];
 
@@ -592,8 +592,8 @@ function renderSummary() {
   return summary;
 }
 
-function countRecordsByCategory(category) {
-  return getSelectedRecords().filter((record) => getRecordCategory(record.text) === category).length;
+function countRecordsByCategory(category, records = getSelectedRecords()) {
+  return records.filter((record) => getRecordCategory(record.text) === category).length;
 }
 
 function getRailDurationSeconds(item) {
@@ -1122,7 +1122,30 @@ function getRecordIcon(text) {
 function getRecordCategory(text) {
   const recordText = String(text || "");
 
-  if (recordText.includes("물") || recordText.includes("세수") || recordText.includes("스트레칭") || recordText.includes("운동")) {
+  if (
+    recordText.includes("물")
+    || recordText.includes("마심")
+    || recordText.includes("차")
+    || recordText.includes("음료")
+    || recordText.includes("밥")
+    || recordText.includes("식사")
+    || recordText.includes("과일")
+    || recordText.includes("간식")
+    || recordText.includes("먹음")
+    || recordText.includes("먹기")
+    || recordText.includes("세수")
+    || recordText.includes("샤워")
+    || recordText.includes("양치")
+    || recordText.includes("씻")
+    || recordText.includes("스트레칭")
+    || recordText.includes("운동")
+    || recordText.includes("걷기")
+    || recordText.includes("산책")
+    || recordText.includes("쉬기")
+    || recordText.includes("휴식")
+    || recordText.includes("낮잠")
+    || recordText.includes("잠")
+  ) {
     return "care";
   }
 
