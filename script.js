@@ -1008,6 +1008,17 @@ function refreshRecordStamp(id, dateKey = state.selectedDateKey) {
   return true;
 }
 
+function refreshSummary() {
+  const currentSummary = app.querySelector(".summary-card");
+
+  if (!currentSummary) {
+    return false;
+  }
+
+  currentSummary.replaceWith(renderSummary());
+  return true;
+}
+
 function refreshToast() {
   app.querySelector(".toast")?.remove();
 
@@ -1348,7 +1359,9 @@ function stampRecord(id) {
     state.stampingRecordId = null;
     state.stampingRecordDateKey = null;
     saveRecordsByDate();
-    if (!refreshRecordStamp(id, stampDateKey)) {
+    if (refreshRecordStamp(id, stampDateKey)) {
+      refreshSummary();
+    } else {
       render();
     }
   }, 640);
