@@ -3,7 +3,9 @@ const liveRegion = document.getElementById("liveRegion");
 
 const STORAGE_KEYS = {
   railItems: "todayFlowRailItems",
-  recordsByDate: "todayFlowRecordsByDate"
+  recordsByDate: "todayFlowRecordsByDate",
+  weatherByDate: "todayFlowWeatherByDate",
+  selectedStampId: "todayFlowSelectedStampId"
 };
 
 const ICONS = {
@@ -32,6 +34,75 @@ const RECORD_ICON_RULES = [
   { icon: ICONS.hygiene, keywords: ["세수", "샤워", "양치", "씻"] },
   { icon: ICONS.rest, keywords: ["쉬기", "휴식", "낮잠", "멍", "잠"] },
   { icon: ICONS.hobby, keywords: ["우쿨렐레", "책", "독서", "영화", "드라마", "취미"] }
+];
+
+const WEATHER_OPTIONS = [
+  { id: "sunny", label: "맑음", icon: "☀️" },
+  { id: "cloudy", label: "흐림", icon: "☁️" },
+  { id: "rain", label: "비", icon: "🌧" },
+  { id: "snow", label: "눈", icon: "❄️" }
+];
+
+const DEFAULT_STAMP_ID = "well-done";
+
+const STAMP_DEFINITIONS = [
+  {
+    id: DEFAULT_STAMP_ID,
+    name: "참 잘했어요",
+    description: "처음부터 사용할 수 있어요.",
+    unlockText: "기본 스탬프",
+    isUnlocked: () => true,
+    image: ICONS.stampResult
+  },
+  {
+    id: "small-start",
+    name: "작은 시작",
+    description: "첫 기록을 남기면 열려요.",
+    unlockText: "기록 1개를 남기면 열려요",
+    isUnlocked: (stats) => stats.totalRecords >= 1
+  },
+  {
+    id: "records-10",
+    name: "기록 10개",
+    description: "작은 기록이 10개 쌓였어요.",
+    unlockText: "기록 10개를 남기면 열려요",
+    isUnlocked: (stats) => stats.totalRecords >= 10
+  },
+  {
+    id: "records-30",
+    name: "기록 30개",
+    description: "기록이 제법 단단히 쌓였어요.",
+    unlockText: "기록 30개를 남기면 열려요",
+    isUnlocked: (stats) => stats.totalRecords >= 30
+  },
+  {
+    id: "rails-5",
+    name: "레일 5개",
+    description: "레일에서 시작한 기록이 5개예요.",
+    unlockText: "레일 5개를 실행하면 열려요",
+    isUnlocked: (stats) => stats.totalRailRecords >= 5
+  },
+  {
+    id: "rails-20",
+    name: "레일 20개",
+    description: "레일 흐름이 많이 쌓였어요.",
+    unlockText: "레일 20개를 실행하면 열려요",
+    isUnlocked: (stats) => stats.totalRailRecords >= 20
+  },
+  {
+    id: "days-3",
+    name: "3일 기록",
+    description: "기록한 날이 3일이 되었어요.",
+    unlockText: "3일 동안 기록을 남기면 열려요",
+    isUnlocked: (stats) => stats.recordedDays >= 3
+  },
+  {
+    id: "days-7",
+    name: "7일 기록",
+    description: "기록한 날이 7일이 되었어요.",
+    unlockText: "7일 동안 기록을 남기면 열려요",
+    isUnlocked: (stats) => stats.recordedDays >= 7
+  }
 ];
 
 const DEFAULT_RAIL_ITEMS = [
@@ -65,6 +136,8 @@ const state = {
   addPanelOpen: false,
   addPanelMode: "record",
   datePanelOpen: false,
+  weatherPanelOpen: false,
+  stampPanelOpen: false,
   recordSheetOpen: false,
   recordSheetMode: "view",
   selectedRecordId: null,
@@ -84,7 +157,9 @@ const state = {
   },
   toastMessage: "",
   railItems: loadRailItems(),
-  recordsByDate: loadRecordsByDate()
+  recordsByDate: loadRecordsByDate(),
+  weatherByDate: loadWeatherByDate(),
+  selectedStampId: loadSelectedStampId()
 };
 
 let toastTimer = null;
@@ -181,6 +256,7 @@ function defaultRecordsForToday() {
       text: "프리미어프로 20분 함",
       icon: getRecordIcon("프리미어프로 20분 함"),
       category: "record",
+      source: "manual",
       stamped: false
     },
     {
@@ -188,6 +264,7 @@ function defaultRecordsForToday() {
       text: "설거지 15분 함",
       icon: getRecordIcon("설거지 15분 함"),
       category: "chore",
+      source: "manual",
       stamped: false
     },
     {
@@ -195,6 +272,7 @@ function defaultRecordsForToday() {
       text: "물 한 컵 마심",
       icon: getRecordIcon("물 한 컵 마심"),
       category: "care",
+      source: "manual",
       stamped: false
     },
     {
@@ -202,6 +280,7 @@ function defaultRecordsForToday() {
       text: "세수함",
       icon: getRecordIcon("세수함"),
       category: "care",
+      source: "manual",
       stamped: false
     }
   ];
@@ -221,6 +300,25 @@ function loadRecordsByDate() {
 
 function saveRecordsByDate() {
   writeJson(STORAGE_KEYS.recordsByDate, state.recordsByDate);
+}
+
+function loadWeatherByDate() {
+  const parsed = readJson(STORAGE_KEYS.weatherByDate, {});
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+}
+
+function saveWeatherByDate() {
+  writeJson(STORAGE_KEYS.weatherByDate, state.weatherByDate);
+}
+
+function loadSelectedStampId() {
+  const savedStampId = localStorage.getItem(STORAGE_KEYS.selectedStampId);
+  const stamp = STAMP_DEFINITIONS.find((item) => item.id === savedStampId);
+  return stamp ? stamp.id : DEFAULT_STAMP_ID;
+}
+
+function saveSelectedStampId() {
+  localStorage.setItem(STORAGE_KEYS.selectedStampId, state.selectedStampId);
 }
 
 function formatDateKey(date) {
@@ -283,6 +381,48 @@ function getSelectedRecord() {
   return getSelectedRecords().find((record) => record.id === state.selectedRecordId);
 }
 
+function getRecordSource(record) {
+  return record?.source === "rail" ? "rail" : "manual";
+}
+
+function getSelectedWeather() {
+  return WEATHER_OPTIONS.find((option) => option.id === state.weatherByDate[state.selectedDateKey]);
+}
+
+function getAllRecords() {
+  return Object.values(state.recordsByDate).flatMap((records) => (
+    Array.isArray(records) ? records : []
+  ));
+}
+
+function getStampStats() {
+  const allRecords = getAllRecords();
+
+  return {
+    totalRecords: allRecords.length,
+    totalRailRecords: allRecords.filter((record) => getRecordSource(record) === "rail").length,
+    recordedDays: Object.values(state.recordsByDate).filter((records) => (
+      Array.isArray(records) && records.length > 0
+    )).length,
+    selectedDateRecords: getSelectedRecords().length,
+    selectedDateRailRecords: getSelectedRecords().filter((record) => getRecordSource(record) === "rail").length
+  };
+}
+
+function isStampUnlocked(stamp, stats = getStampStats()) {
+  return stamp.isUnlocked(stats);
+}
+
+function getStampById(id) {
+  return STAMP_DEFINITIONS.find((stamp) => stamp.id === id) || STAMP_DEFINITIONS[0];
+}
+
+function getSelectedStamp() {
+  const stats = getStampStats();
+  const stamp = getStampById(state.selectedStampId);
+  return isStampUnlocked(stamp, stats) ? stamp : STAMP_DEFINITIONS[0];
+}
+
 function render() {
   app.innerHTML = "";
 
@@ -299,6 +439,14 @@ function render() {
 
   if (state.datePanelOpen) {
     app.append(renderDatePanel());
+  }
+
+  if (state.weatherPanelOpen) {
+    app.append(renderWeatherPanel());
+  }
+
+  if (state.stampPanelOpen) {
+    app.append(renderStampCollectionPanel());
   }
 
   if (state.recordSheetOpen) {
@@ -536,7 +684,7 @@ function renderStampButton(record) {
   const isStamping = state.stampingRecordId === record.id && state.stampingRecordDateKey === state.selectedDateKey;
 
   if (record.stamped) {
-    stamp.append(createIconImage(ICONS.stampResult, "stamp-result-image"));
+    stamp.append(renderStampedRecordMark(record.stampId || DEFAULT_STAMP_ID));
   } else if (isStamping) {
     stamp.append(createIconImage(ICONS.stamp, "stamp-action-image"));
   } else {
@@ -556,33 +704,51 @@ function renderStampButton(record) {
   return stamp;
 }
 
+function renderStampedRecordMark(stampId) {
+  const stamp = getStampById(stampId);
+
+  if (stamp.image) {
+    return createIconImage(stamp.image, "stamp-result-image");
+  }
+
+  return createElement("span", "stamp-result-custom", stamp.name);
+}
+
 function renderSummary() {
   const summary = createElement("section", "section-card summary-card");
   summary.setAttribute("aria-label", "오늘 요약");
-  const stampedRecords = getSelectedRecords().filter((record) => record.stamped);
+  const records = getSelectedRecords();
+  const railRecordCount = records.filter((record) => getRecordSource(record) === "rail").length;
+  const weather = getSelectedWeather();
 
   const summaryItems = [
     {
-      icon: ICONS.hobby,
-      label: "몰입",
-      value: countRecordsByCategory("focus", stampedRecords)
+      icon: ICONS.note,
+      label: "기록",
+      value: records.length
     },
     {
-      icon: ICONS.hygiene,
-      label: "몸 돌봄",
-      value: countRecordsByCategory("care", stampedRecords)
+      icon: ICONS.train,
+      label: "레일",
+      value: railRecordCount
     },
     {
-      icon: ICONS.housework,
-      label: "집안일",
-      value: countRecordsByCategory("chore", stampedRecords)
+      iconText: weather ? weather.icon : "☁️",
+      label: "날씨",
+      value: weather ? weather.label : "선택",
+      action: "open-weather-panel"
     }
   ];
 
   summaryItems.forEach((item) => {
-    const block = createElement("article", "summary-item");
+    const block = item.action
+      ? createButton("summary-item summary-button", "", item.action)
+      : createElement("article", "summary-item");
+
     block.append(
-      createIconImage(item.icon, "summary-icon"),
+      item.iconText
+        ? createElement("span", "summary-icon summary-emoji-icon", item.iconText)
+        : createIconImage(item.icon, "summary-icon"),
       createElement("span", "summary-label", item.label),
       createElement("strong", "summary-value", String(item.value))
     );
@@ -837,6 +1003,114 @@ function renderDatePanel() {
   return overlay;
 }
 
+function renderWeatherPanel() {
+  const overlay = createElement("div", "add-panel-overlay sheet-overlay");
+  overlay.dataset.action = "close-weather-panel";
+  const panel = createElement("section", "add-panel weather-panel");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "weatherPanelTitle");
+
+  const handle = createElement("span", "panel-handle");
+  const title = createElement("h2", null, "오늘 날씨");
+  title.id = "weatherPanelTitle";
+  const subtitle = createElement("p", "panel-subtitle", `${formatDateLabel(state.selectedDateKey)} 날씨를 남겨두세요.`);
+  const options = createElement("div", "weather-options");
+  const selectedWeather = state.weatherByDate[state.selectedDateKey];
+
+  WEATHER_OPTIONS.forEach((option) => {
+    const button = createButton("weather-option", "", "select-weather", option.id);
+
+    if (selectedWeather === option.id) {
+      button.classList.add("is-selected");
+    }
+
+    button.append(
+      createElement("span", "weather-option-icon", option.icon),
+      createElement("span", null, option.label)
+    );
+    options.append(button);
+  });
+
+  panel.append(handle, title, subtitle, options, createButton("panel-cancel record-sheet-close", "닫기", "close-weather-panel"));
+  overlay.append(panel);
+  return overlay;
+}
+
+function renderStampCollectionPanel() {
+  const overlay = createElement("div", "add-panel-overlay sheet-overlay");
+  overlay.dataset.action = "close-stamp-panel";
+  const panel = createElement("section", "add-panel stamp-panel");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "stampPanelTitle");
+
+  const stats = getStampStats();
+  const currentStamp = getSelectedStamp();
+  const unlockedStamps = STAMP_DEFINITIONS.filter((stamp) => isStampUnlocked(stamp, stats));
+  const lockedStamps = STAMP_DEFINITIONS.filter((stamp) => !isStampUnlocked(stamp, stats));
+
+  const handle = createElement("span", "panel-handle");
+  const title = createElement("h2", null, "스탬프 보관함");
+  title.id = "stampPanelTitle";
+  const subtitle = createElement("p", "panel-subtitle", "작은 완료가 쌓이면 새 스탬프가 열려요.");
+
+  const current = createElement("section", "stamp-current");
+  current.append(
+    createElement("span", "stamp-section-label", "현재 사용 중"),
+    renderStampPreview(currentStamp),
+    createElement("strong", null, currentStamp.name)
+  );
+
+  const unlockedSection = renderStampSection("획득한 스탬프", unlockedStamps, stats, true);
+  const lockedSection = renderStampSection("아직 잠긴 스탬프", lockedStamps, stats, false);
+
+  panel.append(handle, title, subtitle, current, unlockedSection, lockedSection, createButton("panel-cancel record-sheet-close", "닫기", "close-stamp-panel"));
+  overlay.append(panel);
+  return overlay;
+}
+
+function renderStampSection(title, stamps, stats, selectable) {
+  const section = createElement("section", "stamp-locker-section");
+  section.append(createElement("h3", null, title));
+
+  const list = createElement("div", "stamp-locker-list");
+
+  if (stamps.length === 0) {
+    list.append(createElement("p", "panel-subtitle", selectable ? "아직 획득한 스탬프가 없어요." : "잠긴 스탬프가 없어요."));
+  }
+
+  stamps.forEach((stamp) => {
+    const item = createButton(
+      `stamp-locker-item${selectable ? "" : " is-locked"}${state.selectedStampId === stamp.id ? " is-selected" : ""}`,
+      "",
+      selectable ? "select-stamp" : "show-locked-stamp",
+      stamp.id
+    );
+    item.append(
+      renderStampPreview(stamp),
+      createElement("strong", null, stamp.name),
+      createElement("span", null, selectable ? stamp.description : stamp.unlockText)
+    );
+    list.append(item);
+  });
+
+  section.append(list);
+  return section;
+}
+
+function renderStampPreview(stamp) {
+  const preview = createElement("span", "stamp-preview");
+
+  if (stamp.image) {
+    preview.append(createIconImage(stamp.image, "stamp-preview-image"));
+  } else {
+    preview.append(createElement("span", "stamp-preview-text", stamp.name.slice(0, 2)));
+  }
+
+  return preview;
+}
+
 function renderRecordSheet() {
   const overlay = createElement("div", "add-panel-overlay sheet-overlay");
   overlay.dataset.action = "close-record-sheet";
@@ -1087,6 +1361,8 @@ function openAddPanel(mode = "record") {
   state.pendingRailDeleteId = null;
   state.datePanelOpen = false;
   state.recordSheetOpen = false;
+  state.weatherPanelOpen = false;
+  state.stampPanelOpen = false;
 }
 
 function closeAddPanel() {
@@ -1164,6 +1440,7 @@ function saveRecord(form) {
       icon: getRecordIcon(text),
       text,
       category: getRecordCategory(text),
+      source: "manual",
       stamped: false
     },
     ...getSelectedRecords()
@@ -1303,6 +1580,7 @@ function recordRailResult(id) {
       icon: getRecordIcon(recordText),
       text: recordText,
       category: getRecordCategory(recordText),
+      source: "rail",
       stamped: false
     },
     ...getSelectedRecords()
@@ -1342,6 +1620,7 @@ function stampRecord(id) {
   }
 
   const stampDateKey = state.selectedDateKey;
+  const selectedStampId = getSelectedStamp().id;
   state.stampingRecordId = id;
   state.stampingRecordDateKey = stampDateKey;
   if (!refreshRecordStamp(id, stampDateKey)) {
@@ -1353,7 +1632,7 @@ function stampRecord(id) {
     state.recordsByDate = {
       ...state.recordsByDate,
       [stampDateKey]: records.map((item) => (
-        item.id === id ? { ...item, stamped: true } : item
+        item.id === id ? { ...item, stamped: true, stampId: selectedStampId } : item
       ))
     };
     state.stampingRecordId = null;
@@ -1376,6 +1655,8 @@ function openRecordSheet() {
   state.recordSheetOpen = true;
   state.addPanelOpen = false;
   state.datePanelOpen = false;
+  state.weatherPanelOpen = false;
+  state.stampPanelOpen = false;
 }
 
 function closeRecordSheet() {
@@ -1386,12 +1667,39 @@ function closeRecordSheet() {
   state.recordSheetMode = "view";
 }
 
+function openWeatherPanel() {
+  state.weatherPanelOpen = true;
+  state.addPanelOpen = false;
+  state.datePanelOpen = false;
+  state.recordSheetOpen = false;
+  state.stampPanelOpen = false;
+}
+
+function closeWeatherPanel() {
+  state.weatherPanelOpen = false;
+}
+
+function openStampPanel() {
+  state.stampPanelOpen = true;
+  state.activeTab = "stamps";
+  state.addPanelOpen = false;
+  state.datePanelOpen = false;
+  state.weatherPanelOpen = false;
+  state.recordSheetOpen = false;
+}
+
+function closeStampPanel() {
+  state.stampPanelOpen = false;
+}
+
 function changeSelectedDate(nextDateKey) {
   state.selectedDateKey = nextDateKey;
   state.activeTab = "home";
   state.pendingRailDeleteId = null;
   closeRecordSheet();
   closeAddPanel();
+  closeWeatherPanel();
+  closeStampPanel();
 }
 
 app.addEventListener("click", (event) => {
@@ -1415,6 +1723,8 @@ app.addEventListener("click", (event) => {
     state.datePanelOpen = true;
     state.addPanelOpen = false;
     state.recordSheetOpen = false;
+    state.weatherPanelOpen = false;
+    state.stampPanelOpen = false;
     render();
     return;
   }
@@ -1433,6 +1743,29 @@ app.addEventListener("click", (event) => {
 
   if (action === "select-today") {
     changeSelectedDate(todayKey);
+    render();
+    return;
+  }
+
+  if (action === "open-weather-panel") {
+    openWeatherPanel();
+    render();
+    return;
+  }
+
+  if (action === "close-weather-panel") {
+    closeWeatherPanel();
+    render();
+    return;
+  }
+
+  if (action === "select-weather") {
+    state.weatherByDate = {
+      ...state.weatherByDate,
+      [state.selectedDateKey]: id
+    };
+    saveWeatherByDate();
+    closeWeatherPanel();
     render();
     return;
   }
@@ -1594,8 +1927,33 @@ app.addEventListener("click", (event) => {
   }
 
   if (action === "show-stamps") {
-    showToast("스탬프 화면은 준비 중이에요.");
+    openStampPanel();
     render();
+    return;
+  }
+
+  if (action === "close-stamp-panel") {
+    closeStampPanel();
+    render();
+    return;
+  }
+
+  if (action === "select-stamp") {
+    const stamp = getStampById(id);
+
+    if (isStampUnlocked(stamp)) {
+      state.selectedStampId = stamp.id;
+      saveSelectedStampId();
+      showToast(`${stamp.name} 스탬프를 사용할게요.`);
+      render();
+    }
+    return;
+  }
+
+  if (action === "show-locked-stamp") {
+    const stamp = getStampById(id);
+    showToast(stamp.unlockText);
+    refreshToast();
     return;
   }
 
