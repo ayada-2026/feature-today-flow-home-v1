@@ -38,9 +38,10 @@ const RECORD_ICON_RULES = [
 
 const WEATHER_OPTIONS = [
   { id: "sunny", label: "맑음", icon: "☀️" },
+  { id: "partly", label: "해+구름", icon: "⛅" },
   { id: "cloudy", label: "흐림", icon: "☁️" },
-  { id: "rain", label: "비", icon: "🌧" },
-  { id: "snow", label: "눈", icon: "❄️" }
+  { id: "rainy", label: "비", icon: "🌧" },
+  { id: "snowy", label: "눈", icon: "❄️" }
 ];
 
 const DEFAULT_STAMP_ID = "well-done";
@@ -304,11 +305,29 @@ function saveRecordsByDate() {
 
 function loadWeatherByDate() {
   const parsed = readJson(STORAGE_KEYS.weatherByDate, {});
-  return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed).map(([dateKey, weatherId]) => [dateKey, normalizeWeatherId(weatherId)])
+  );
 }
 
 function saveWeatherByDate() {
   writeJson(STORAGE_KEYS.weatherByDate, state.weatherByDate);
+}
+
+function normalizeWeatherId(weatherId) {
+  if (weatherId === "rain") {
+    return "rainy";
+  }
+
+  if (weatherId === "snow") {
+    return "snowy";
+  }
+
+  return weatherId;
 }
 
 function loadSelectedStampId() {
@@ -386,7 +405,7 @@ function getRecordSource(record) {
 }
 
 function getSelectedWeather() {
-  return WEATHER_OPTIONS.find((option) => option.id === state.weatherByDate[state.selectedDateKey]);
+  return WEATHER_OPTIONS.find((option) => option.id === normalizeWeatherId(state.weatherByDate[state.selectedDateKey]));
 }
 
 function getAllRecords() {
@@ -733,9 +752,9 @@ function renderSummary() {
       value: railRecordCount
     },
     {
-      iconText: weather ? weather.icon : "☁️",
+      type: "weather",
       label: "날씨",
-      value: weather ? weather.label : "선택",
+      weather,
       action: "open-weather-panel"
     }
   ];
@@ -746,16 +765,25 @@ function renderSummary() {
       : createElement("article", "summary-item");
 
     block.append(
-      item.iconText
-        ? createElement("span", "summary-icon summary-emoji-icon", item.iconText)
+      item.type === "weather"
+        ? createElement("span", "summary-icon summary-weather-top")
         : createIconImage(item.icon, "summary-icon"),
       createElement("span", "summary-label", item.label),
-      createElement("strong", "summary-value", String(item.value))
+      item.type === "weather"
+        ? renderSummaryWeatherSticker(item.weather)
+        : createElement("strong", "summary-value", String(item.value))
     );
     summary.append(block);
   });
 
   return summary;
+}
+
+function renderSummaryWeatherSticker(weather) {
+  const sticker = createElement("strong", "summary-value summary-weather-sticker", weather ? weather.icon : "—");
+  sticker.dataset.weather = weather ? weather.id : "empty";
+  sticker.setAttribute("aria-label", weather ? weather.label : "날씨 선택");
+  return sticker;
 }
 
 function countRecordsByCategory(category, records = getSelectedRecords()) {
@@ -1016,7 +1044,7 @@ function renderWeatherPanel() {
   title.id = "weatherPanelTitle";
   const subtitle = createElement("p", "panel-subtitle", `${formatDateLabel(state.selectedDateKey)} 날씨를 남겨두세요.`);
   const options = createElement("div", "weather-options");
-  const selectedWeather = state.weatherByDate[state.selectedDateKey];
+  const selectedWeather = normalizeWeatherId(state.weatherByDate[state.selectedDateKey]);
 
   WEATHER_OPTIONS.forEach((option) => {
     const button = createButton("weather-option", "", "select-weather", option.id);
