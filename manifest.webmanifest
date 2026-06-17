@@ -1,0 +1,18 @@
+{
+  "name": "오늘의 흐름",
+  "short_name": "오늘의 흐름",
+  "description": "가볍게 시작하고 해낸 일을 도장으로 남기는 하루 흐름 앱",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7ecdf",
+  "theme_color": "#f5eadc",
+  "icons": [
+    {
+      "src": "./assets/icons/homeicon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
