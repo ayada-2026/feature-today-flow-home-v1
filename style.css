@@ -974,6 +974,53 @@ h1 {
   object-fit: contain;
 }
 
+.tab-svg-icon svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+  overflow: visible;
+}
+
+.tab-svg-fill {
+  fill: rgba(226, 174, 129, 0.25);
+  stroke: none;
+}
+
+.tab-svg-line,
+.tab-svg-accent {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tab-svg-line-soft {
+  opacity: 0.62;
+  stroke-width: 1.8;
+}
+
+.tab-svg-accent {
+  fill: rgba(226, 174, 129, 0.3);
+  stroke-width: 1.8;
+}
+
+.tab-flow-leaf {
+  fill: rgba(171, 142, 94, 0.28);
+}
+
+.tab-button.is-active .tab-svg-fill {
+  fill: rgba(229, 138, 109, 0.24);
+}
+
+.tab-button.is-active .tab-svg-accent {
+  fill: rgba(229, 138, 109, 0.28);
+}
+
+.tab-button.is-active .tab-flow-leaf {
+  fill: rgba(229, 138, 109, 0.24);
+}
+
 .tab-button.is-active {
   color: var(--peach);
 }

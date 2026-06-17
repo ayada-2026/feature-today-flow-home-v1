@@ -742,14 +742,15 @@ function renderSummary() {
   const summary = createElement("section", "section-card summary-card");
   summary.setAttribute("aria-label", "오늘 요약");
   const records = getSelectedRecords();
-  const railRecordCount = records.filter((record) => getRecordSource(record) === "rail").length;
+  const stampedRecords = records.filter((record) => record.stamped);
+  const railRecordCount = stampedRecords.filter((record) => getRecordSource(record) === "rail").length;
   const weather = getSelectedWeather();
 
   const summaryItems = [
     {
       icon: ICONS.note,
       label: "기록",
-      value: records.length
+      value: stampedRecords.length
     },
     {
       icon: ICONS.train,
@@ -874,11 +875,11 @@ function renderTabBar() {
   nav.setAttribute("aria-label", "하단 탭");
 
   const tabs = [
-    { id: "home", icon: "⌂", label: "홈", action: "go-home" },
-    { id: "records", icon: ICONS.note, label: "기록", action: "go-records", image: true },
+    { id: "home", icon: "home", label: "홈", action: "go-home", svg: true },
+    { id: "records", icon: "organize", label: "정리", action: "go-records", svg: true },
     { id: "add", icon: "+", label: "", action: "open-add-panel" },
     { id: "stamps", icon: ICONS.stamp, label: "스탬프", action: "show-stamps", image: true },
-    { id: "my-flow", icon: "♡", label: "나의 흐름", action: "show-my-flow" }
+    { id: "my-flow", icon: "flow", label: "나의 흐름", action: "show-my-flow", svg: true }
   ];
 
   tabs.forEach((tab) => {
@@ -895,14 +896,51 @@ function renderTabBar() {
       button.classList.add("is-active");
     }
 
-    const tabIcon = tab.image
-      ? createIconImage(tab.icon, "tab-icon tab-image-icon")
-      : createElement("span", "tab-icon", tab.icon);
+    const tabIcon = renderTabIcon(tab);
     button.append(tabIcon, createElement("span", null, tab.label));
     nav.append(button);
   });
 
   return nav;
+}
+
+function renderTabIcon(tab) {
+  if (tab.image) {
+    return createIconImage(tab.icon, "tab-icon tab-image-icon");
+  }
+
+  if (!tab.svg) {
+    return createElement("span", "tab-icon", tab.icon);
+  }
+
+  const icon = createElement("span", `tab-icon tab-svg-icon tab-${tab.icon}-icon`);
+  icon.setAttribute("aria-hidden", "true");
+
+  const svgMap = {
+    home: `
+      <svg viewBox="0 0 32 32" role="img" focusable="false">
+        <path class="tab-svg-fill" d="M7.4 14.1 16 6.8l8.6 7.3v10.4a2 2 0 0 1-2 2h-4.1v-6.8h-5v6.8H9.4a2 2 0 0 1-2-2Z" />
+        <path class="tab-svg-line" d="M5.6 15.5 16 6.6l10.4 8.9M10.1 13.5v10.2h3.4v-6.4h5v6.4h3.4V13.5" />
+      </svg>
+    `,
+    organize: `
+      <svg viewBox="0 0 32 32" role="img" focusable="false">
+        <path class="tab-svg-fill" d="M9.2 6.9h12.3a2.4 2.4 0 0 1 2.4 2.4v15.5a2.4 2.4 0 0 1-2.4 2.4H9.2a2.4 2.4 0 0 1-2.4-2.4V9.3a2.4 2.4 0 0 1 2.4-2.4Z" />
+        <path class="tab-svg-line" d="M11 6.2v4.1M16 6.2v4.1M21 6.2v4.1M10.8 15h8.8M10.8 19.2h6.3" />
+        <path class="tab-svg-accent" d="m19.1 24.2 4.5-4.5 1.9 1.9-4.5 4.5-2.3.4Z" />
+      </svg>
+    `,
+    flow: `
+      <svg viewBox="0 0 32 32" role="img" focusable="false">
+        <path class="tab-svg-line" d="M6.1 18.9c3.5-5.7 8.4-5.5 11.4-2.6 2.4 2.4 5.7 2.7 8.4-1.9" />
+        <path class="tab-svg-line tab-svg-line-soft" d="M7.5 23c3.2-2.7 6.7-2.4 9.5-.3 2.4 1.8 5.2 1.8 7.5-.7" />
+        <path class="tab-svg-fill tab-flow-leaf" d="M19.4 10.2c3.1-.7 5.2.5 6.5 3.2-3 .7-5.2-.3-6.5-3.2Z" />
+      </svg>
+    `
+  };
+
+  icon.innerHTML = svgMap[tab.icon] || "";
+  return icon;
 }
 
 function renderAddPanel() {
