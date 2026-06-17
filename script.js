@@ -22,7 +22,12 @@ const ICONS = {
   hygiene: "assets/icons/hygiene.png",
   rest: "assets/icons/rest.png",
   hobby: "assets/icons/hobby.png",
-  misc: "assets/icons/misc.png"
+  misc: "assets/icons/misc.png",
+  weatherSunny: "assets/icons/sun.png",
+  weatherPartly: "assets/icons/suncloud.png",
+  weatherCloudy: "assets/icons/cloud.png",
+  weatherRainy: "assets/icons/rain.png",
+  weatherSnowy: "assets/icons/snow.png"
 };
 
 const RECORD_ICON_RULES = [
@@ -37,11 +42,11 @@ const RECORD_ICON_RULES = [
 ];
 
 const WEATHER_OPTIONS = [
-  { id: "sunny", label: "맑음", icon: "☀️" },
-  { id: "partly", label: "해+구름", icon: "⛅" },
-  { id: "cloudy", label: "흐림", icon: "☁️" },
-  { id: "rainy", label: "비", icon: "🌧" },
-  { id: "snowy", label: "눈", icon: "❄️" }
+  { id: "sunny", label: "맑음", image: ICONS.weatherSunny },
+  { id: "partly", label: "해+구름", image: ICONS.weatherPartly },
+  { id: "cloudy", label: "흐림", image: ICONS.weatherCloudy },
+  { id: "rainy", label: "비", image: ICONS.weatherRainy },
+  { id: "snowy", label: "눈", image: ICONS.weatherSnowy }
 ];
 
 const DEFAULT_STAMP_ID = "well-done";
@@ -780,9 +785,16 @@ function renderSummary() {
 }
 
 function renderSummaryWeatherSticker(weather) {
-  const sticker = createElement("strong", "summary-value summary-weather-sticker", weather ? weather.icon : "—");
+  const sticker = createElement("strong", "summary-value summary-weather-sticker");
   sticker.dataset.weather = weather ? weather.id : "empty";
   sticker.setAttribute("aria-label", weather ? weather.label : "날씨 선택");
+
+  if (weather) {
+    sticker.append(createIconImage(weather.image, "summary-weather-image", weather.label));
+  } else {
+    sticker.append(createElement("span", "summary-weather-empty", "—"));
+  }
+
   return sticker;
 }
 
@@ -1054,7 +1066,7 @@ function renderWeatherPanel() {
     }
 
     button.append(
-      createElement("span", "weather-option-icon", option.icon),
+      createIconImage(option.image, "weather-option-icon", option.label),
       createElement("span", null, option.label)
     );
     options.append(button);
