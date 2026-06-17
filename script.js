@@ -563,9 +563,9 @@ function renderSummary() {
 
   const summaryItems = [
     {
-      icon: ICONS.note,
-      label: "기록",
-      value: stampedRecords.length
+      icon: ICONS.hobby,
+      label: "몰입",
+      value: countRecordsByCategory("focus", stampedRecords)
     },
     {
       icon: ICONS.hygiene,
@@ -1121,45 +1121,21 @@ function getRecordIcon(text) {
 
 function getRecordCategory(text) {
   const recordText = String(text || "");
+  const includesAny = (keywords) => keywords.some((keyword) => recordText.includes(keyword));
 
-  if (
-    recordText.includes("물")
-    || recordText.includes("마심")
-    || recordText.includes("차")
-    || recordText.includes("음료")
-    || recordText.includes("밥")
-    || recordText.includes("식사")
-    || recordText.includes("과일")
-    || recordText.includes("간식")
-    || recordText.includes("먹음")
-    || recordText.includes("먹기")
-    || recordText.includes("세수")
-    || recordText.includes("샤워")
-    || recordText.includes("양치")
-    || recordText.includes("씻")
-    || recordText.includes("스트레칭")
-    || recordText.includes("운동")
-    || recordText.includes("걷기")
-    || recordText.includes("산책")
-    || recordText.includes("쉬기")
-    || recordText.includes("휴식")
-    || recordText.includes("낮잠")
-    || recordText.includes("잠")
-  ) {
+  if (includesAny(["우쿨렐레", "코덱스", "책읽기", "책", "독서", "기록", "글쓰기", "프리미어프로", "편집", "공부", "작업", "사진정리", "만들기", "취미"])) {
+    return "focus";
+  }
+
+  if (includesAny(["물", "마심", "차", "음료", "밥", "식사", "과일", "간식", "먹음", "먹기", "세수", "샤워", "양치", "씻", "스트레칭", "운동", "걷기", "산책", "병원", "약", "쉬기", "휴식", "낮잠", "잠", "미용실", "머리컷", "뿌리염색", "염색"])) {
     return "care";
   }
 
-  if (
-    recordText.includes("설거지")
-    || recordText.includes("청소")
-    || recordText.includes("빨래")
-    || recordText.includes("정리")
-    || recordText.includes("집안")
-  ) {
+  if (includesAny(["설거지", "청소", "빨래", "정리", "장보기", "저녁준비", "요리", "쓰레기", "분리수거", "집안일", "집안"])) {
     return "chore";
   }
 
-  return "record";
+  return "focus";
 }
 
 function saveRecord(form) {
