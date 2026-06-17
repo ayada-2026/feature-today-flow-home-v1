@@ -796,6 +796,11 @@ h1 {
   border-right: 0;
 }
 
+.summary-weather-item {
+  gap: 0;
+  min-height: 78px;
+}
+
 .summary-icon {
   width: 28px;
   height: 28px;
@@ -827,18 +832,16 @@ h1 {
 }
 
 .summary-weather-sticker {
-  width: 46px;
-  height: 46px;
+  width: 76px;
+  height: 76px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(126, 91, 62, 0.09);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.82), transparent 28%),
-    rgba(250, 224, 209, 0.48);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #7b6655;
   line-height: 1;
-  box-shadow: 0 7px 14px rgba(92, 66, 38, 0.08);
+  box-shadow: none;
   transform-origin: 50% 60%;
 }
 
@@ -847,8 +850,8 @@ h1 {
 }
 
 .summary-weather-image {
-  width: 38px;
-  height: 38px;
+  width: 70px;
+  height: 70px;
   object-fit: contain;
   filter: saturate(0.92) contrast(0.96);
 }

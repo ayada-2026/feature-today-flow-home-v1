@@ -769,15 +769,18 @@ function renderSummary() {
       ? createButton("summary-item summary-button", "", item.action)
       : createElement("article", "summary-item");
 
-    block.append(
-      item.type === "weather"
-        ? createElement("span", "summary-icon summary-weather-top")
-        : createIconImage(item.icon, "summary-icon"),
-      createElement("span", "summary-label", item.label),
-      item.type === "weather"
-        ? renderSummaryWeatherSticker(item.weather)
-        : createElement("strong", "summary-value", String(item.value))
-    );
+    if (item.type === "weather") {
+      block.classList.add("summary-weather-item");
+      block.setAttribute("aria-label", item.weather ? `날씨 ${item.weather.label}` : "날씨 선택");
+      block.append(renderSummaryWeatherSticker(item.weather));
+    } else {
+      block.append(
+        createIconImage(item.icon, "summary-icon"),
+        createElement("span", "summary-label", item.label),
+        createElement("strong", "summary-value", String(item.value))
+      );
+    }
+
     summary.append(block);
   });
 
