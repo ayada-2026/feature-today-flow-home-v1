@@ -225,14 +225,36 @@ function writeJson(key, value) {
 }
 
 function normalizeRailItem(item) {
+  const timerStatus = ["running", "paused", "done"].includes(item.timerStatus)
+    ? item.timerStatus
+    : "idle";
+  const durationSeconds = Number.isFinite(Number(item.durationSeconds)) && Number(item.durationSeconds) > 0
+    ? Number(item.durationSeconds)
+    : null;
+  const remainingSeconds = Number.isFinite(Number(item.remainingSeconds))
+    ? Math.max(0, Number(item.remainingSeconds))
+    : null;
+  const startedAt = Number.isFinite(Number(item.startedAt)) && Number(item.startedAt) > 0
+    ? Number(item.startedAt)
+    : null;
+  const pausedAt = Number.isFinite(Number(item.pausedAt)) && Number(item.pausedAt) > 0
+    ? Number(item.pausedAt)
+    : null;
+  const elapsedBeforePause = Number.isFinite(Number(item.elapsedBeforePause))
+    ? Math.max(0, Number(item.elapsedBeforePause))
+    : 0;
+
   return {
     id: item.id || createId("rail"),
     time: item.time || "시간",
     title: item.title || "새 항목",
     note: item.note || "가볍게",
-    timerStatus: "idle",
-    durationSeconds: null,
-    remainingSeconds: null
+    timerStatus,
+    durationSeconds,
+    remainingSeconds,
+    startedAt,
+    pausedAt,
+    elapsedBeforePause
   };
 }
 
@@ -241,7 +263,13 @@ function stripRailForStorage(item) {
     id: item.id,
     time: item.time,
     title: item.title,
-    note: item.note
+    note: item.note,
+    timerStatus: item.timerStatus || "idle",
+    durationSeconds: item.durationSeconds ?? null,
+    remainingSeconds: item.remainingSeconds ?? null,
+    startedAt: item.startedAt ?? null,
+    pausedAt: item.pausedAt ?? null,
+    elapsedBeforePause: item.elapsedBeforePause ?? 0
   };
 }
 
@@ -601,7 +629,7 @@ function renderRailActions(item) {
     startButton.classList.add("is-paused");
     startButton.textContent = "";
     startButton.append(
-      createElement("span", "rail-paused-time", formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item))),
+      createElement("span", "rail-paused-time", formatRemainingTime(getRailRemainingSeconds(item))),
       createElement("span", "rail-paused-icon")
     );
   }
@@ -828,9 +856,36 @@ function formatRemainingTime(totalSeconds) {
   return `${minutesPart}:${secondsPart}`;
 }
 
+function getRailStoredDuration(item) {
+  return item.durationSeconds || getRailDurationSeconds(item);
+}
+
+function getRailRemainingSeconds(item, now = Date.now()) {
+  const durationSeconds = getRailStoredDuration(item);
+  const timerStatus = item.timerStatus || "idle";
+
+  if (timerStatus === "done") {
+    return 0;
+  }
+
+  if (timerStatus === "paused") {
+    return Math.max(0, item.remainingSeconds ?? durationSeconds);
+  }
+
+  if (timerStatus !== "running") {
+    return Math.max(0, item.remainingSeconds ?? durationSeconds);
+  }
+
+  const startedAt = item.startedAt || now;
+  const elapsedBeforePause = Math.max(0, item.elapsedBeforePause || 0);
+  const elapsedSinceStart = Math.max(0, Math.floor((now - startedAt) / 1000));
+
+  return Math.max(0, durationSeconds - elapsedBeforePause - elapsedSinceStart);
+}
+
 function getRailButtonLabel(item) {
   const timerStatus = item.timerStatus || "idle";
-  const remaining = formatRemainingTime(item.remainingSeconds ?? getRailDurationSeconds(item));
+  const remaining = formatRemainingTime(getRailRemainingSeconds(item));
 
   if (timerStatus === "running") {
     return remaining;
@@ -1382,10 +1437,14 @@ function refreshToast() {
   }
 }
 
-function updateRailItem(id, nextValues) {
+function updateRailItem(id, nextValues, options = {}) {
   state.railItems = state.railItems.map((item) => (
     item.id === id ? { ...item, ...nextValues } : item
   ));
+
+  if (options.persist) {
+    saveRailItems();
+  }
 }
 
 function clearRailTimer(id) {
@@ -1568,12 +1627,16 @@ function startRailTimer(id) {
   }
 
   const durationSeconds = getRailDurationSeconds(item);
+  const now = Date.now();
   clearRailTimer(id);
   updateRailItem(id, {
     timerStatus: "running",
     durationSeconds,
-    remainingSeconds: durationSeconds
-  });
+    remainingSeconds: durationSeconds,
+    startedAt: now,
+    pausedAt: null,
+    elapsedBeforePause: 0
+  }, { persist: true });
   if (!refreshRailActions(id)) {
     render();
   }
@@ -1588,11 +1651,96 @@ function runRailTimer(id) {
   railTimerIntervals.set(id, intervalId);
 }
 
+function syncRailTimersWithClock(options = {}) {
+  const now = Date.now();
+  let changed = false;
+
+  state.railItems = state.railItems.map((item) => {
+    if ((item.timerStatus || "idle") !== "running") {
+      return item;
+    }
+
+    const durationSeconds = getRailStoredDuration(item);
+    const remainingSeconds = getRailRemainingSeconds(item, now);
+    const nextItem = {
+      ...item,
+      durationSeconds,
+      remainingSeconds
+    };
+
+    if (remainingSeconds === 0) {
+      changed = true;
+      return {
+        ...nextItem,
+        timerStatus: "done",
+        startedAt: null,
+        pausedAt: null,
+        elapsedBeforePause: durationSeconds
+      };
+    }
+
+    if (remainingSeconds !== item.remainingSeconds) {
+      changed = true;
+    }
+
+    return nextItem;
+  });
+
+  if (changed && options.persist) {
+    saveRailItems();
+  }
+
+  if (changed && options.refresh) {
+    const refreshed = state.railItems.every((item) => {
+      if ((item.timerStatus || "idle") !== "running" && item.remainingSeconds !== 0) {
+        return true;
+      }
+
+      return refreshRailActions(item.id);
+    });
+
+    if (!refreshed) {
+      render();
+    }
+  }
+
+  return changed;
+}
+
+function startActiveRailTimers() {
+  state.railItems.forEach((item) => {
+    if ((item.timerStatus || "idle") === "running") {
+      runRailTimer(item.id);
+    }
+  });
+}
+
+function resyncVisibleRailTimers() {
+  syncRailTimersWithClock({ persist: true, refresh: true });
+  startActiveRailTimers();
+}
+
 function pauseRailTimer(id) {
+  const item = state.railItems.find((railItem) => railItem.id === id);
+
+  if (!item) {
+    return;
+  }
+
+  const now = Date.now();
+  const durationSeconds = getRailStoredDuration(item);
+  const remainingSeconds = getRailRemainingSeconds(item, now);
+  const elapsedBeforePause = Math.max(0, durationSeconds - remainingSeconds);
+
   clearRailTimer(id);
   updateRailItem(id, {
-    timerStatus: "paused"
-  });
+    timerStatus: remainingSeconds === 0 ? "done" : "paused",
+    durationSeconds,
+    remainingSeconds,
+    startedAt: null,
+    pausedAt: now,
+    elapsedBeforePause
+  }, { persist: true });
   if (!refreshRailActions(id)) {
     render();
   }
@@ -1605,9 +1753,33 @@ function resumeRailTimer(id) {
     return;
   }
 
+  const now = Date.now();
+  const durationSeconds = getRailStoredDuration(item);
+  const remainingSeconds = getRailRemainingSeconds(item, now);
+
+  if (remainingSeconds === 0) {
+    updateRailItem(id, {
+      timerStatus: "done",
+      durationSeconds,
+      remainingSeconds: 0,
+      startedAt: null,
+      pausedAt: null,
+      elapsedBeforePause: durationSeconds
+    }, { persist: true });
+    if (!refreshRailActions(id)) {
+      render();
+    }
+    return;
+  }
+
   updateRailItem(id, {
-    timerStatus: "running"
-  });
+    timerStatus: "running",
+    durationSeconds,
+    remainingSeconds,
+    startedAt: now,
+    pausedAt: null,
+    elapsedBeforePause: Math.max(0, durationSeconds - remainingSeconds)
+  }, { persist: true });
   if (!refreshRailActions(id)) {
     render();
   }
@@ -1622,14 +1794,19 @@ function tickRailTimer(id) {
     return;
   }
 
-  const nextRemaining = Math.max(0, (item.remainingSeconds ?? getRailDurationSeconds(item)) - 1);
+  const durationSeconds = getRailStoredDuration(item);
+  const nextRemaining = getRailRemainingSeconds(item);
 
   if (nextRemaining === 0) {
     clearRailTimer(id);
     updateRailItem(id, {
       remainingSeconds: 0,
-      timerStatus: "done"
-    });
+      timerStatus: "done",
+      durationSeconds,
+      startedAt: null,
+      pausedAt: null,
+      elapsedBeforePause: durationSeconds
+    }, { persist: true });
     showToast(`${item.title} 기록할 준비가 됐어요.`);
     if (!refreshRailActions(id)) {
       render();
@@ -1669,8 +1846,11 @@ function recordRailResult(id) {
   updateRailItem(id, {
     timerStatus: "idle",
     durationSeconds: null,
-    remainingSeconds: null
-  });
+    remainingSeconds: null,
+    startedAt: null,
+    pausedAt: null,
+    elapsedBeforePause: 0
+  }, { persist: true });
   state.activeTab = "records";
   showToast("선택한 날짜 기록에 남겼어요.");
   render();
@@ -2072,7 +2252,10 @@ app.addEventListener("submit", (event) => {
       note: String(formData.get("note") || "").trim() || "가볍게",
       timerStatus: "idle",
       durationSeconds: null,
-      remainingSeconds: null
+      remainingSeconds: null,
+      startedAt: null,
+      pausedAt: null,
+      elapsedBeforePause: 0
     };
 
     clearRailTimer(id);
@@ -2129,4 +2312,16 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    resyncVisibleRailTimers();
+  }
+});
+
+window.addEventListener("pageshow", () => {
+  resyncVisibleRailTimers();
+});
+
+syncRailTimersWithClock({ persist: true });
+startActiveRailTimers();
 render();
