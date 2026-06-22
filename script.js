@@ -13,6 +13,8 @@ const SOUND_PATHS = {
   timerDone: "assets/sounds/timer-done.mp3"
 };
 
+const STAMP_SOUND_DELAY_MS = 140;
+
 const ICONS = {
   train: "assets/icons/train.png",
   note: "assets/icons/note.png",
@@ -2142,7 +2144,11 @@ function stampRecord(id) {
   const selectedStampId = getSelectedStamp().id;
   state.stampingRecordId = id;
   state.stampingRecordDateKey = stampDateKey;
-  playEffectSound("stamp");
+  window.setTimeout(() => {
+    if (state.stampingRecordId === id && state.stampingRecordDateKey === stampDateKey) {
+      playEffectSound("stamp");
+    }
+  }, STAMP_SOUND_DELAY_MS);
   if (!refreshRecordStamp(id, stampDateKey)) {
     render();
   }
