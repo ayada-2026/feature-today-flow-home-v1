@@ -10,7 +10,6 @@ const STORAGE_KEYS = {
 };
 
 const SOUND_PATHS = {
-  stamp: "assets/sounds/stamp.mp3",
   timerDone: "assets/sounds/timer-done.mp3"
 };
 
@@ -177,6 +176,7 @@ const state = {
 
 let toastTimer = null;
 const railTimerIntervals = new Map();
+let effectAudioContext = null;
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -393,6 +393,11 @@ function playEffectSound(soundName) {
     return;
   }
 
+  if (soundName === "stamp") {
+    playStampSound();
+    return;
+  }
+
   const soundPath = SOUND_PATHS[soundName];
 
   if (!soundPath) {
@@ -409,6 +414,84 @@ function playEffectSound(soundName) {
     }
   } catch {
     // Sound files are optional. Playback failures should not block the app.
+  }
+}
+
+function getEffectAudioContext() {
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextConstructor) {
+    return null;
+  }
+
+  if (!effectAudioContext) {
+    effectAudioContext = new AudioContextConstructor();
+  }
+
+  return effectAudioContext;
+}
+
+function playStampSound() {
+  try {
+    const audioContext = getEffectAudioContext();
+
+    if (!audioContext) {
+      return;
+    }
+
+    if (audioContext.state === "suspended") {
+      const resumePromise = audioContext.resume();
+      if (resumePromise?.catch) {
+        resumePromise.catch(() => {});
+      }
+    }
+
+    const now = audioContext.currentTime;
+    const endTime = now + 0.12;
+    const masterGain = audioContext.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.exponentialRampToValueAtTime(0.18, now + 0.008);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+    masterGain.connect(audioContext.destination);
+
+    const bodyOscillator = audioContext.createOscillator();
+    const bodyGain = audioContext.createGain();
+    bodyOscillator.type = "sine";
+    bodyOscillator.frequency.setValueAtTime(150, now);
+    bodyOscillator.frequency.exponentialRampToValueAtTime(88, now + 0.095);
+    bodyGain.gain.setValueAtTime(0.0001, now);
+    bodyGain.gain.exponentialRampToValueAtTime(0.22, now + 0.006);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.115);
+    bodyOscillator.connect(bodyGain);
+    bodyGain.connect(masterGain);
+    bodyOscillator.start(now);
+    bodyOscillator.stop(endTime);
+
+    const noiseDuration = 0.075;
+    const noiseBuffer = audioContext.createBuffer(1, Math.max(1, Math.floor(audioContext.sampleRate * noiseDuration)), audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+
+    for (let index = 0; index < noiseData.length; index += 1) {
+      const fade = 1 - index / noiseData.length;
+      noiseData[index] = (Math.random() * 2 - 1) * fade * 0.35;
+    }
+
+    const noiseSource = audioContext.createBufferSource();
+    const noiseFilter = audioContext.createBiquadFilter();
+    const noiseGain = audioContext.createGain();
+    noiseSource.buffer = noiseBuffer;
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.setValueAtTime(850, now);
+    noiseGain.gain.setValueAtTime(0.0001, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.035, now + 0.004);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDuration);
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterGain);
+    noiseSource.start(now);
+    noiseSource.stop(now + noiseDuration);
+  } catch {
+    // Synthetic sound is optional. Fail silently to keep stamping reliable.
   }
 }
 
