@@ -5,7 +5,13 @@ const STORAGE_KEYS = {
   railItems: "todayFlowRailItems",
   recordsByDate: "todayFlowRecordsByDate",
   weatherByDate: "todayFlowWeatherByDate",
-  selectedStampId: "todayFlowSelectedStampId"
+  selectedStampId: "todayFlowSelectedStampId",
+  soundEnabled: "todayFlowSoundEnabled"
+};
+
+const SOUND_PATHS = {
+  stamp: "assets/sounds/stamp.mp3",
+  timerDone: "assets/sounds/timer-done.mp3"
 };
 
 const ICONS = {
@@ -165,7 +171,8 @@ const state = {
   railItems: loadRailItems(),
   recordsByDate: loadRecordsByDate(),
   weatherByDate: loadWeatherByDate(),
-  selectedStampId: loadSelectedStampId()
+  selectedStampId: loadSelectedStampId(),
+  soundEnabled: loadSoundEnabled()
 };
 
 let toastTimer = null;
@@ -371,6 +378,38 @@ function loadSelectedStampId() {
 
 function saveSelectedStampId() {
   localStorage.setItem(STORAGE_KEYS.selectedStampId, state.selectedStampId);
+}
+
+function loadSoundEnabled() {
+  return localStorage.getItem(STORAGE_KEYS.soundEnabled) === "true";
+}
+
+function saveSoundEnabled() {
+  localStorage.setItem(STORAGE_KEYS.soundEnabled, String(state.soundEnabled));
+}
+
+function playEffectSound(soundName) {
+  if (!state.soundEnabled) {
+    return;
+  }
+
+  const soundPath = SOUND_PATHS[soundName];
+
+  if (!soundPath) {
+    return;
+  }
+
+  try {
+    const audio = new Audio(soundPath);
+    audio.volume = 0.72;
+    const playPromise = audio.play();
+
+    if (playPromise?.catch) {
+      playPromise.catch(() => {});
+    }
+  } catch {
+    // Sound files are optional. Playback failures should not block the app.
+  }
 }
 
 function formatDateKey(date) {
@@ -1201,9 +1240,25 @@ function renderStampCollectionPanel() {
   const unlockedSection = renderStampSection("획득한 스탬프", unlockedStamps, stats, true);
   const lockedSection = renderStampSection("아직 잠긴 스탬프", lockedStamps, stats, false);
 
-  panel.append(handle, title, subtitle, current, unlockedSection, lockedSection, createButton("panel-cancel record-sheet-close", "닫기", "close-stamp-panel"));
+  panel.append(handle, title, subtitle, current, renderSoundToggle(), unlockedSection, lockedSection, createButton("panel-cancel record-sheet-close", "닫기", "close-stamp-panel"));
   overlay.append(panel);
   return overlay;
+}
+
+function renderSoundToggle() {
+  const button = createButton(
+    `sound-toggle${state.soundEnabled ? " is-on" : ""}`,
+    "",
+    "toggle-sound"
+  );
+  button.setAttribute("aria-pressed", String(state.soundEnabled));
+  button.append(
+    createElement("span", "sound-toggle-copy", "효과음"),
+    createElement("span", "sound-toggle-state", state.soundEnabled ? "켜짐" : "꺼짐"),
+    createElement("span", "sound-toggle-switch")
+  );
+
+  return button;
 }
 
 function renderStampSection(title, stamps, stats, selectable) {
@@ -1670,6 +1725,9 @@ function syncRailTimersWithClock(options = {}) {
 
     if (remainingSeconds === 0) {
       changed = true;
+      if (options.playSound) {
+        playEffectSound("timerDone");
+      }
       return {
         ...nextItem,
         timerStatus: "done",
@@ -1716,7 +1774,7 @@ function startActiveRailTimers() {
 }
 
 function resyncVisibleRailTimers() {
-  syncRailTimersWithClock({ persist: true, refresh: true });
+  syncRailTimersWithClock({ persist: true, refresh: true, playSound: true });
   startActiveRailTimers();
 }
 
@@ -1807,6 +1865,7 @@ function tickRailTimer(id) {
       pausedAt: null,
       elapsedBeforePause: durationSeconds
     }, { persist: true });
+    playEffectSound("timerDone");
     showToast(`${item.title} 기록할 준비가 됐어요.`);
     if (!refreshRailActions(id)) {
       render();
@@ -1884,6 +1943,7 @@ function stampRecord(id) {
   const selectedStampId = getSelectedStamp().id;
   state.stampingRecordId = id;
   state.stampingRecordDateKey = stampDateKey;
+  playEffectSound("stamp");
   if (!refreshRecordStamp(id, stampDateKey)) {
     render();
   }
@@ -2195,6 +2255,14 @@ app.addEventListener("click", (event) => {
 
   if (action === "close-stamp-panel") {
     closeStampPanel();
+    render();
+    return;
+  }
+
+  if (action === "toggle-sound") {
+    state.soundEnabled = !state.soundEnabled;
+    saveSoundEnabled();
+    showToast(state.soundEnabled ? "효과음을 켰어요." : "효과음을 껐어요.");
     render();
     return;
   }
