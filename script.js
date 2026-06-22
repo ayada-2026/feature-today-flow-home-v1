@@ -398,6 +398,15 @@ function playEffectSound(soundName) {
     return;
   }
 
+  if (soundName === "timerDone") {
+    playTimerDoneSound();
+    return;
+  }
+
+  playAudioFileEffect(soundName);
+}
+
+function playAudioFileEffect(soundName) {
   const soundPath = SOUND_PATHS[soundName];
 
   if (!soundPath) {
@@ -431,6 +440,21 @@ function getEffectAudioContext() {
   return effectAudioContext;
 }
 
+function unlockEffectAudioContext() {
+  try {
+    const audioContext = getEffectAudioContext();
+
+    if (audioContext?.state === "suspended") {
+      const resumePromise = audioContext.resume();
+      if (resumePromise?.catch) {
+        resumePromise.catch(() => {});
+      }
+    }
+  } catch {
+    // Audio unlock is best-effort only.
+  }
+}
+
 function playStampSound() {
   try {
     const audioContext = getEffectAudioContext();
@@ -442,30 +466,56 @@ function playStampSound() {
     if (audioContext.state === "suspended") {
       const resumePromise = audioContext.resume();
       if (resumePromise?.catch) {
-        resumePromise.catch(() => {});
+        resumePromise
+          .then(() => {
+            synthesizeStampSound(audioContext);
+          })
+          .catch(() => {});
       }
+      return;
     }
 
+    synthesizeStampSound(audioContext);
+  } catch {
+    // Synthetic sound is optional. Fail silently to keep stamping reliable.
+  }
+}
+
+function synthesizeStampSound(audioContext) {
+  try {
     const now = audioContext.currentTime;
-    const endTime = now + 0.12;
+    const endTime = now + 0.13;
     const masterGain = audioContext.createGain();
     masterGain.gain.setValueAtTime(0.0001, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.18, now + 0.008);
+    masterGain.gain.exponentialRampToValueAtTime(0.28, now + 0.008);
     masterGain.gain.exponentialRampToValueAtTime(0.0001, endTime);
     masterGain.connect(audioContext.destination);
 
     const bodyOscillator = audioContext.createOscillator();
     const bodyGain = audioContext.createGain();
     bodyOscillator.type = "sine";
-    bodyOscillator.frequency.setValueAtTime(150, now);
-    bodyOscillator.frequency.exponentialRampToValueAtTime(88, now + 0.095);
+    bodyOscillator.frequency.setValueAtTime(230, now);
+    bodyOscillator.frequency.exponentialRampToValueAtTime(118, now + 0.095);
     bodyGain.gain.setValueAtTime(0.0001, now);
-    bodyGain.gain.exponentialRampToValueAtTime(0.22, now + 0.006);
+    bodyGain.gain.exponentialRampToValueAtTime(0.34, now + 0.006);
     bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.115);
     bodyOscillator.connect(bodyGain);
     bodyGain.connect(masterGain);
     bodyOscillator.start(now);
     bodyOscillator.stop(endTime);
+
+    const softTap = audioContext.createOscillator();
+    const softTapGain = audioContext.createGain();
+    softTap.type = "triangle";
+    softTap.frequency.setValueAtTime(380, now);
+    softTap.frequency.exponentialRampToValueAtTime(240, now + 0.045);
+    softTapGain.gain.setValueAtTime(0.0001, now);
+    softTapGain.gain.exponentialRampToValueAtTime(0.055, now + 0.004);
+    softTapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+    softTap.connect(softTapGain);
+    softTapGain.connect(masterGain);
+    softTap.start(now);
+    softTap.stop(now + 0.055);
 
     const noiseDuration = 0.075;
     const noiseBuffer = audioContext.createBuffer(1, Math.max(1, Math.floor(audioContext.sampleRate * noiseDuration)), audioContext.sampleRate);
@@ -481,9 +531,9 @@ function playStampSound() {
     const noiseGain = audioContext.createGain();
     noiseSource.buffer = noiseBuffer;
     noiseFilter.type = "lowpass";
-    noiseFilter.frequency.setValueAtTime(850, now);
+    noiseFilter.frequency.setValueAtTime(980, now);
     noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.035, now + 0.004);
+    noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 0.004);
     noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDuration);
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
@@ -492,6 +542,72 @@ function playStampSound() {
     noiseSource.stop(now + noiseDuration);
   } catch {
     // Synthetic sound is optional. Fail silently to keep stamping reliable.
+  }
+}
+
+function playTimerDoneSound() {
+  try {
+    const audioContext = getEffectAudioContext();
+
+    if (!audioContext) {
+      playAudioFileEffect("timerDone");
+      return;
+    }
+
+    if (audioContext.state === "suspended") {
+      const resumePromise = audioContext.resume();
+      if (resumePromise?.catch) {
+        resumePromise
+          .then(() => {
+            synthesizeTimerDoneSound(audioContext);
+          })
+          .catch(() => {
+            playAudioFileEffect("timerDone");
+          });
+      }
+      return;
+    }
+
+    synthesizeTimerDoneSound(audioContext);
+  } catch {
+    playAudioFileEffect("timerDone");
+  }
+}
+
+function synthesizeTimerDoneSound(audioContext) {
+  try {
+    const now = audioContext.currentTime;
+    const masterGain = audioContext.createGain();
+    masterGain.gain.setValueAtTime(0.0001, now);
+    masterGain.gain.exponentialRampToValueAtTime(0.16, now + 0.012);
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+    masterGain.connect(audioContext.destination);
+
+    const firstTone = audioContext.createOscillator();
+    const firstGain = audioContext.createGain();
+    firstTone.type = "sine";
+    firstTone.frequency.setValueAtTime(330, now);
+    firstGain.gain.setValueAtTime(0.0001, now);
+    firstGain.gain.exponentialRampToValueAtTime(0.14, now + 0.014);
+    firstGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    firstTone.connect(firstGain);
+    firstGain.connect(masterGain);
+    firstTone.start(now);
+    firstTone.stop(now + 0.19);
+
+    const secondTone = audioContext.createOscillator();
+    const secondGain = audioContext.createGain();
+    secondTone.type = "sine";
+    secondTone.frequency.setValueAtTime(430, now + 0.105);
+    secondGain.gain.setValueAtTime(0.0001, now + 0.095);
+    secondGain.gain.exponentialRampToValueAtTime(0.11, now + 0.12);
+    secondGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.31);
+    secondTone.connect(secondGain);
+    secondGain.connect(masterGain);
+    secondTone.start(now + 0.095);
+    secondTone.stop(now + 0.32);
+  } catch {
+    playAudioFileEffect("timerDone");
   }
 }
 
@@ -2344,6 +2460,9 @@ app.addEventListener("click", (event) => {
 
   if (action === "toggle-sound") {
     state.soundEnabled = !state.soundEnabled;
+    if (state.soundEnabled) {
+      unlockEffectAudioContext();
+    }
     saveSoundEnabled();
     showToast(state.soundEnabled ? "효과음을 켰어요." : "효과음을 껐어요.");
     render();
