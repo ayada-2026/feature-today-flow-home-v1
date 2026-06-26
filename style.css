@@ -358,12 +358,13 @@ h1 {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
+  justify-self: end;
 }
 
 .home-block-control {
   min-width: 0;
-  min-height: 28px;
-  padding: 0 9px;
+  min-height: 27px;
+  padding: 0 8px;
   border: 1px solid rgba(126, 91, 62, 0.1);
   border-radius: 999px;
   background: rgba(255, 250, 244, 0.74);
@@ -388,15 +389,15 @@ h1 {
 }
 
 .home-block-menu-trigger {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(126, 91, 62, 0.1);
   border-radius: 999px;
-  background: rgba(255, 250, 244, 0.58);
-  color: rgba(109, 84, 65, 0.72);
-  font-size: 1.16rem;
+  background: rgba(255, 250, 244, 0.42);
+  color: rgba(109, 84, 65, 0.6);
+  font-size: 1.06rem;
   font-weight: 900;
   line-height: 1;
   list-style: none;
@@ -412,6 +413,7 @@ h1 {
   top: calc(100% + 8px);
   right: 0;
   min-width: 118px;
+  max-width: calc(100vw - 36px);
   display: grid;
   gap: 4px;
   padding: 7px;
@@ -921,12 +923,12 @@ h1 {
 }
 
 .record-empty-card {
-  margin: 0 18px 18px;
+  margin: 14px 18px 18px;
   min-height: 150px;
   display: grid;
   justify-items: center;
   gap: 10px;
-  padding: 20px 18px;
+  padding: 22px 18px;
   border: 1px dashed rgba(194, 139, 112, 0.32);
   border-radius: 20px;
   background:
@@ -1901,13 +1903,13 @@ h1 {
   }
 
   .home-block-header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
     padding: 12px;
   }
 
   .home-block-controls {
-    justify-content: flex-start;
+    justify-content: flex-end;
     width: auto;
   }
 

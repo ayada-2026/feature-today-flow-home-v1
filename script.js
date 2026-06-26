@@ -906,7 +906,7 @@ function renderCollapsedRailSet() {
     blockId: "railSet",
     icon: ICONS.train,
     title: "오늘의 레일",
-    subtitle: `${state.railItems.length}개의 레일이 있어요. 필요할 때만 펼쳐서 시작해요.`,
+    subtitle: `${state.railItems.length}개의 레일이 있어요.`,
     collapsible: true
   });
   card.append(header);
