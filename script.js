@@ -1788,6 +1788,10 @@ function renderRecordManageList() {
 
 function renderToast() {
   const toast = createElement("div", "toast", state.toastMessage);
+  const hasOpenSheet = state.recordSheetOpen || state.addPanelOpen || state.datePanelOpen || state.weatherPanelOpen || state.stampPanelOpen;
+  if (hasOpenSheet) {
+    toast.classList.add("toast-above-sheet");
+  }
   toast.setAttribute("role", "status");
   return toast;
 }

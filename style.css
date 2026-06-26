@@ -1777,6 +1777,11 @@ h1 {
   transform: translateX(-50%);
 }
 
+.toast-above-sheet {
+  bottom: auto;
+  top: max(18px, env(safe-area-inset-top));
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
