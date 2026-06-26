@@ -311,6 +311,7 @@ h1 {
 }
 
 .home-block-header {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -353,7 +354,8 @@ h1 {
 
 .home-block-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 6px;
 }
@@ -377,6 +379,67 @@ h1 {
   color: #bd6047;
 }
 
+.home-block-menu {
+  position: relative;
+}
+
+.home-block-menu[open] {
+  z-index: 5;
+}
+
+.home-block-menu-trigger {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(126, 91, 62, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.58);
+  color: rgba(109, 84, 65, 0.72);
+  font-size: 1.16rem;
+  font-weight: 900;
+  line-height: 1;
+  list-style: none;
+  cursor: pointer;
+}
+
+.home-block-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.home-block-menu-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 118px;
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid rgba(126, 91, 62, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 253, 249, 0.97);
+  box-shadow: 0 12px 28px rgba(92, 66, 38, 0.14);
+}
+
+.home-block-menu-item {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #8a7563;
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.home-block-menu-item:hover,
+.home-block-menu-item:focus-visible {
+  outline: 0;
+  background: rgba(250, 224, 209, 0.56);
+  color: #bd6047;
+}
+
 .rail-set-block .hero {
   overflow: hidden;
   border-radius: 24px;
@@ -384,7 +447,7 @@ h1 {
 }
 
 .home-block-collapsed {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .home-block-collapsed .home-block-header {
@@ -855,6 +918,78 @@ h1 {
   font-size: 0.94rem;
   line-height: 1.5;
   text-align: center;
+}
+
+.record-empty-card {
+  margin: 0 18px 18px;
+  min-height: 150px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 18px;
+  border: 1px dashed rgba(194, 139, 112, 0.32);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(250, 224, 209, 0.52), transparent 34%),
+    rgba(255, 253, 249, 0.68);
+  color: #735946;
+  text-align: center;
+}
+
+.record-empty-illustration {
+  position: relative;
+  width: 74px;
+  height: 58px;
+}
+
+.record-empty-note {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: saturate(0.92);
+}
+
+.record-empty-stamp {
+  position: absolute;
+  right: 5px;
+  bottom: 1px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  opacity: 0.48;
+  transform: rotate(-10deg);
+}
+
+.record-empty-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.record-empty-copy strong {
+  color: #4c382c;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.record-empty-copy span {
+  color: #8d7664;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.record-empty-action {
+  min-height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(250, 224, 209, 0.78);
+  color: #bd6047;
+  font-size: 0.84rem;
+  font-weight: 900;
+  box-shadow: 0 8px 16px rgba(223, 118, 89, 0.12);
 }
 
 .summary-card {
@@ -1772,14 +1907,11 @@ h1 {
   }
 
   .home-block-controls {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    justify-content: stretch;
-    width: 100%;
+    justify-content: flex-start;
+    width: auto;
   }
 
   .home-block-control {
-    width: 100%;
     padding: 0 6px;
   }
 

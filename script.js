@@ -923,11 +923,6 @@ function renderHomeBlockHeader({ blockId, icon, title, subtitle, collapsible }) 
   );
 
   const controls = createElement("div", "home-block-controls");
-  controls.append(
-    createButton("home-block-control", "위로", "move-home-block", `${blockId}:up`),
-    createButton("home-block-control", "아래로", "move-home-block", `${blockId}:down`)
-  );
-
   if (collapsible) {
     const isCollapsed = Boolean(state.homeLayout.collapsed[blockId]);
     controls.append(createButton(
@@ -937,9 +932,25 @@ function renderHomeBlockHeader({ blockId, icon, title, subtitle, collapsible }) 
       blockId
     ));
   }
+  controls.append(renderHomeBlockMenu(blockId));
 
   header.append(copy, controls);
   return header;
+}
+
+function renderHomeBlockMenu(blockId) {
+  const menu = createElement("details", "home-block-menu");
+  const trigger = createElement("summary", "home-block-menu-trigger", "⋯");
+  trigger.setAttribute("aria-label", "블럭 편집 메뉴");
+
+  const list = createElement("div", "home-block-menu-list");
+  list.append(
+    createButton("home-block-menu-item", "위로 이동", "move-home-block", `${blockId}:up`),
+    createButton("home-block-menu-item", "아래로 이동", "move-home-block", `${blockId}:down`)
+  );
+
+  menu.append(trigger, list);
+  return menu;
 }
 
 function renderTodayRail() {
@@ -1074,8 +1085,7 @@ function renderTodayRecords() {
   const records = getSelectedRecords();
 
   if (records.length === 0) {
-    const empty = createElement("p", "record-empty", "이 날짜에는 아직 남긴 기록이 없어요.");
-    section.append(empty);
+    section.append(renderRecordEmptyState());
     return section;
   }
 
@@ -1093,6 +1103,28 @@ function renderTodayRecords() {
 
   section.append(list);
   return section;
+}
+
+function renderRecordEmptyState() {
+  const empty = createElement("div", "record-empty-card");
+  const illustration = createElement("div", "record-empty-illustration");
+  illustration.append(
+    createIconImage(ICONS.note, "record-empty-note", "빈 기록 노트"),
+    createIconImage(ICONS.stamp, "record-empty-stamp", "도장")
+  );
+
+  const copy = createElement("div", "record-empty-copy");
+  copy.append(
+    createElement("strong", null, "아직 남긴 기록이 없어요."),
+    createElement("span", null, "작은 일 하나만 남겨볼까요?")
+  );
+
+  empty.append(
+    illustration,
+    copy,
+    createButton("record-empty-action", "+ 한 줄 남기기", "open-add-panel")
+  );
+  return empty;
 }
 
 function renderRecordIcon(text) {
