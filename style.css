@@ -31,6 +31,7 @@ body {
 body {
   min-height: 100dvh;
   color: var(--ink);
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.9), transparent 24%),
     radial-gradient(circle at 82% 18%, rgba(255, 211, 188, 0.45), transparent 28%),
@@ -51,7 +52,8 @@ button {
 }
 
 .flow-app {
-  width: min(100%, 480px);
+  width: min(100vw, 480px);
+  max-width: 100vw;
   min-height: 100dvh;
   margin: 0 auto;
   padding: 18px 14px 94px;
@@ -59,6 +61,7 @@ button {
 
 .phone-shell {
   overflow: hidden;
+  max-width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.78);
   border-radius: 34px;
   background: linear-gradient(180deg, rgba(255, 251, 244, 0.88), rgba(250, 237, 221, 0.94));
@@ -294,6 +297,101 @@ h1 {
   display: grid;
   gap: 18px;
   padding: 0 18px 22px;
+}
+
+.home-block-stack {
+  display: grid;
+  gap: 18px;
+  padding: 18px 18px 22px;
+}
+
+.home-block {
+  display: grid;
+  gap: 14px;
+}
+
+.home-block-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 253, 249, 0.74);
+  box-shadow: 0 10px 22px rgba(92, 66, 38, 0.07);
+}
+
+.home-block-copy {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 9px;
+  row-gap: 2px;
+  min-width: 0;
+}
+
+.home-block-icon {
+  grid-row: 1 / span 2;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.home-block-copy strong {
+  color: #4c382c;
+  font-size: 0.96rem;
+  font-weight: 900;
+}
+
+.home-block-copy span {
+  color: #8d7664;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.home-block-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.home-block-control {
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(126, 91, 62, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.74);
+  color: #8d7664;
+  font-size: 0.72rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.home-block-primary-control {
+  border-color: rgba(223, 118, 89, 0.18);
+  background: rgba(250, 224, 209, 0.56);
+  color: #bd6047;
+}
+
+.rail-set-block .hero {
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow: var(--soft-shadow);
+}
+
+.home-block-collapsed {
+  overflow: hidden;
+}
+
+.home-block-collapsed .home-block-header {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .section-card {
@@ -929,7 +1027,7 @@ h1 {
   left: 50%;
   bottom: 14px;
   z-index: 10;
-  width: min(calc(100% - 28px), 452px);
+  width: min(calc(100vw - 28px), 452px);
   height: 74px;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1660,6 +1758,33 @@ h1 {
 
   .section-stack {
     padding: 0 13px 20px;
+  }
+
+  .home-block-stack {
+    gap: 16px;
+    padding: 14px 13px 20px;
+  }
+
+  .home-block-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .home-block-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .home-block-control {
+    width: 100%;
+    padding: 0 6px;
+  }
+
+  .rail-set-block .hero {
+    border-radius: 22px;
   }
 
   .rail-list,

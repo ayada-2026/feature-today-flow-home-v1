@@ -6,7 +6,8 @@ const STORAGE_KEYS = {
   recordsByDate: "todayFlowRecordsByDate",
   weatherByDate: "todayFlowWeatherByDate",
   selectedStampId: "todayFlowSelectedStampId",
-  soundEnabled: "todayFlowSoundEnabled"
+  soundEnabled: "todayFlowSoundEnabled",
+  homeLayout: "todayFlowHomeLayout"
 };
 
 const SOUND_PATHS = {
@@ -14,6 +15,14 @@ const SOUND_PATHS = {
 };
 
 const STAMP_SOUND_DELAY_MS = 140;
+const HOME_BLOCK_IDS = ["recordSet", "railSet"];
+const DEFAULT_HOME_LAYOUT = {
+  order: ["recordSet", "railSet"],
+  collapsed: {
+    recordSet: false,
+    railSet: true
+  }
+};
 
 const ICONS = {
   train: "assets/icons/train.png",
@@ -173,7 +182,8 @@ const state = {
   recordsByDate: loadRecordsByDate(),
   weatherByDate: loadWeatherByDate(),
   selectedStampId: loadSelectedStampId(),
-  soundEnabled: loadSoundEnabled()
+  soundEnabled: loadSoundEnabled(),
+  homeLayout: loadHomeLayout()
 };
 
 let toastTimer = null;
@@ -388,6 +398,34 @@ function loadSoundEnabled() {
 
 function saveSoundEnabled() {
   localStorage.setItem(STORAGE_KEYS.soundEnabled, String(state.soundEnabled));
+}
+
+function normalizeHomeLayout(layout) {
+  const savedOrder = Array.isArray(layout?.order) ? layout.order : [];
+  const order = [
+    ...savedOrder.filter((id) => HOME_BLOCK_IDS.includes(id)),
+    ...HOME_BLOCK_IDS.filter((id) => !savedOrder.includes(id))
+  ];
+  const collapsed = {
+    ...DEFAULT_HOME_LAYOUT.collapsed,
+    ...(layout?.collapsed && typeof layout.collapsed === "object" ? layout.collapsed : {})
+  };
+
+  return {
+    order,
+    collapsed: {
+      recordSet: Boolean(collapsed.recordSet),
+      railSet: Boolean(collapsed.railSet)
+    }
+  };
+}
+
+function loadHomeLayout() {
+  return normalizeHomeLayout(readJson(STORAGE_KEYS.homeLayout, DEFAULT_HOME_LAYOUT));
+}
+
+function saveHomeLayout() {
+  writeJson(STORAGE_KEYS.homeLayout, state.homeLayout);
 }
 
 function playEffectSound(soundName) {
@@ -719,8 +757,7 @@ function render() {
   app.innerHTML = "";
 
   const shell = createElement("section", "phone-shell");
-  shell.append(renderHero());
-  shell.append(renderSectionStack());
+  shell.append(renderHomeBlocks());
 
   app.append(shell);
   app.append(renderTabBar());
@@ -752,7 +789,7 @@ function render() {
 
 function renderHero() {
   const hero = createElement("section", "hero");
-  hero.id = "homeSection";
+  hero.id = "heroSection";
   hero.setAttribute("aria-labelledby", "pageTitle");
 
   hero.append(renderPostIts());
@@ -805,10 +842,104 @@ function renderPostIts() {
   return layer;
 }
 
-function renderSectionStack() {
-  const stack = createElement("div", "section-stack");
-  stack.append(renderTodayRail(), renderTodayRecords(), renderSummary());
+function renderHomeBlocks() {
+  const stack = createElement("div", "home-block-stack");
+  stack.id = "homeSection";
+
+  state.homeLayout.order.forEach((blockId) => {
+    if (blockId === "recordSet") {
+      stack.append(renderRecordSetBlock());
+    }
+
+    if (blockId === "railSet") {
+      stack.append(renderRailSetBlock());
+    }
+  });
+
   return stack;
+}
+
+function renderRecordSetBlock() {
+  const block = createElement("section", "home-block record-set-block");
+  block.id = "recordSet";
+  block.append(
+    renderHomeBlockHeader({
+      blockId: "recordSet",
+      icon: ICONS.note,
+      title: "기록 세트",
+      subtitle: "오늘 남긴 기록과 요약을 정리해요.",
+      collapsible: false
+    }),
+    renderTodayRecords(),
+    renderSummary()
+  );
+  return block;
+}
+
+function renderRailSetBlock() {
+  const isCollapsed = Boolean(state.homeLayout.collapsed.railSet);
+  const block = createElement("section", `home-block rail-set-block${isCollapsed ? " is-collapsed" : ""}`);
+  block.id = "railSet";
+
+  if (isCollapsed) {
+    block.append(renderCollapsedRailSet());
+    return block;
+  }
+
+  block.append(
+    renderHomeBlockHeader({
+      blockId: "railSet",
+      icon: ICONS.train,
+      title: "레일 세트",
+      subtitle: `${state.railItems.length}개의 레일을 펼쳐두었어요.`,
+      collapsible: true
+    }),
+    renderHero(),
+    renderTodayRail()
+  );
+  return block;
+}
+
+function renderCollapsedRailSet() {
+  const card = createElement("section", "section-card home-block-collapsed");
+  const header = renderHomeBlockHeader({
+    blockId: "railSet",
+    icon: ICONS.train,
+    title: "오늘의 레일",
+    subtitle: `${state.railItems.length}개의 레일이 있어요. 필요할 때만 펼쳐서 시작해요.`,
+    collapsible: true
+  });
+  card.append(header);
+  return card;
+}
+
+function renderHomeBlockHeader({ blockId, icon, title, subtitle, collapsible }) {
+  const header = createElement("header", "home-block-header");
+  const copy = createElement("div", "home-block-copy");
+  copy.append(
+    createIconImage(icon, "home-block-icon"),
+    createElement("strong", null, title),
+    createElement("span", null, subtitle)
+  );
+
+  const controls = createElement("div", "home-block-controls");
+  controls.append(
+    createButton("home-block-control", "위로", "move-home-block", `${blockId}:up`),
+    createButton("home-block-control", "아래로", "move-home-block", `${blockId}:down`)
+  );
+
+  if (collapsible) {
+    const isCollapsed = Boolean(state.homeLayout.collapsed[blockId]);
+    controls.append(createButton(
+      "home-block-control home-block-primary-control",
+      isCollapsed ? "펼치기" : "접기",
+      "toggle-home-block",
+      blockId
+    ));
+  }
+
+  header.append(copy, controls);
+  return header;
 }
 
 function renderTodayRail() {
@@ -1869,6 +2000,14 @@ function saveNewRail(form) {
     })
   ];
   saveRailItems();
+  state.homeLayout = normalizeHomeLayout({
+    ...state.homeLayout,
+    collapsed: {
+      ...state.homeLayout.collapsed,
+      railSet: false
+    }
+  });
+  saveHomeLayout();
   closeAddPanel();
   showToast("오늘의 레일에 추가했어요.");
   render();
@@ -2068,7 +2207,7 @@ function tickRailTimer(id) {
     }, { persist: true });
     playEffectSound("timerDone");
     showToast(`${item.title} 기록할 준비가 됐어요.`);
-    if (!refreshRailActions(id)) {
+    if (!refreshRailActions(id) && !isRailSetCollapsed()) {
       render();
     }
     return;
@@ -2077,7 +2216,7 @@ function tickRailTimer(id) {
   updateRailItem(id, {
     remainingSeconds: nextRemaining
   });
-  if (!refreshRailActions(id)) {
+  if (!refreshRailActions(id) && !isRailSetCollapsed()) {
     render();
   }
 }
@@ -2228,6 +2367,45 @@ function changeSelectedDate(nextDateKey) {
   closeStampPanel();
 }
 
+function toggleHomeBlock(blockId) {
+  state.homeLayout = normalizeHomeLayout({
+    ...state.homeLayout,
+    collapsed: {
+      ...state.homeLayout.collapsed,
+      [blockId]: !state.homeLayout.collapsed[blockId]
+    }
+  });
+  saveHomeLayout();
+}
+
+function moveHomeBlock(blockId, direction) {
+  const order = [...state.homeLayout.order];
+  const currentIndex = order.indexOf(blockId);
+
+  if (currentIndex < 0) {
+    return;
+  }
+
+  const nextIndex = direction === "up"
+    ? Math.max(0, currentIndex - 1)
+    : Math.min(order.length - 1, currentIndex + 1);
+
+  if (nextIndex === currentIndex) {
+    return;
+  }
+
+  [order[currentIndex], order[nextIndex]] = [order[nextIndex], order[currentIndex]];
+  state.homeLayout = normalizeHomeLayout({
+    ...state.homeLayout,
+    order
+  });
+  saveHomeLayout();
+}
+
+function isRailSetCollapsed() {
+  return Boolean(state.homeLayout.collapsed.railSet);
+}
+
 app.addEventListener("click", (event) => {
   const actionTarget = event.target.closest("[data-action]");
 
@@ -2243,6 +2421,19 @@ app.addEventListener("click", (event) => {
     if (isOverlayClick) {
       return;
     }
+  }
+
+  if (action === "move-home-block") {
+    const [blockId, direction] = String(id || "").split(":");
+    moveHomeBlock(blockId, direction);
+    render();
+    return;
+  }
+
+  if (action === "toggle-home-block") {
+    toggleHomeBlock(id);
+    render();
+    return;
   }
 
   if (action === "open-date-panel") {
