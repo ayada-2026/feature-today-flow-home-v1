@@ -455,7 +455,7 @@ function playAudioFileEffect(soundName) {
 
   try {
     const audio = new Audio(soundPath);
-    audio.volume = 0.72;
+    audio.volume = 0.95;
     const playPromise = audio.play();
 
     if (playPromise?.catch) {
@@ -527,7 +527,7 @@ function synthesizeStampSound(audioContext) {
     const endTime = now + 0.13;
     const masterGain = audioContext.createGain();
     masterGain.gain.setValueAtTime(0.0001, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.28, now + 0.008);
+    masterGain.gain.exponentialRampToValueAtTime(0.62, now + 0.008);
     masterGain.gain.exponentialRampToValueAtTime(0.0001, endTime);
     masterGain.connect(audioContext.destination);
 
@@ -537,7 +537,7 @@ function synthesizeStampSound(audioContext) {
     bodyOscillator.frequency.setValueAtTime(230, now);
     bodyOscillator.frequency.exponentialRampToValueAtTime(118, now + 0.095);
     bodyGain.gain.setValueAtTime(0.0001, now);
-    bodyGain.gain.exponentialRampToValueAtTime(0.34, now + 0.006);
+    bodyGain.gain.exponentialRampToValueAtTime(0.58, now + 0.006);
     bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.115);
     bodyOscillator.connect(bodyGain);
     bodyGain.connect(masterGain);
@@ -550,7 +550,7 @@ function synthesizeStampSound(audioContext) {
     softTap.frequency.setValueAtTime(380, now);
     softTap.frequency.exponentialRampToValueAtTime(240, now + 0.045);
     softTapGain.gain.setValueAtTime(0.0001, now);
-    softTapGain.gain.exponentialRampToValueAtTime(0.055, now + 0.004);
+    softTapGain.gain.exponentialRampToValueAtTime(0.12, now + 0.004);
     softTapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
     softTap.connect(softTapGain);
     softTapGain.connect(masterGain);
@@ -573,7 +573,7 @@ function synthesizeStampSound(audioContext) {
     noiseFilter.type = "lowpass";
     noiseFilter.frequency.setValueAtTime(980, now);
     noiseGain.gain.setValueAtTime(0.0001, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.05, now + 0.004);
+    noiseGain.gain.exponentialRampToValueAtTime(0.11, now + 0.004);
     noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + noiseDuration);
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
@@ -619,7 +619,7 @@ function synthesizeTimerDoneSound(audioContext) {
     const now = audioContext.currentTime;
     const masterGain = audioContext.createGain();
     masterGain.gain.setValueAtTime(0.0001, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.16, now + 0.012);
+    masterGain.gain.exponentialRampToValueAtTime(0.38, now + 0.012);
     masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
     masterGain.connect(audioContext.destination);
 
@@ -628,7 +628,7 @@ function synthesizeTimerDoneSound(audioContext) {
     firstTone.type = "sine";
     firstTone.frequency.setValueAtTime(330, now);
     firstGain.gain.setValueAtTime(0.0001, now);
-    firstGain.gain.exponentialRampToValueAtTime(0.14, now + 0.014);
+    firstGain.gain.exponentialRampToValueAtTime(0.32, now + 0.014);
     firstGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
     firstTone.connect(firstGain);
     firstGain.connect(masterGain);
@@ -640,7 +640,7 @@ function synthesizeTimerDoneSound(audioContext) {
     secondTone.type = "sine";
     secondTone.frequency.setValueAtTime(430, now + 0.105);
     secondGain.gain.setValueAtTime(0.0001, now + 0.095);
-    secondGain.gain.exponentialRampToValueAtTime(0.11, now + 0.12);
+    secondGain.gain.exponentialRampToValueAtTime(0.26, now + 0.12);
     secondGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.31);
     secondTone.connect(secondGain);
     secondGain.connect(masterGain);
